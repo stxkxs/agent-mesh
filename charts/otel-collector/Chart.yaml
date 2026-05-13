@@ -1,0 +1,18 @@
+apiVersion: v2
+name: agent-mesh-otel-collector
+description: |
+  OpenTelemetry Collector DaemonSet wired for agent-mesh — accepts OTLP from
+  agent pods, runs a redaction processor over `agent_mesh.*` fields, and
+  forwards to Datadog OTLP. The Datadog API key is sourced from a Kubernetes
+  Secret backed by Azure Key Vault via CSI Secrets Store Provider.
+type: application
+version: 0.1.0
+appVersion: '0.105.0'
+home: https://github.com/stxkxs/agent-mesh
+maintainers:
+  - name: stxkxs
+keywords:
+  - opentelemetry
+  - datadog
+  - llm
+  - observability

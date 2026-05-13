@@ -1,0 +1,66 @@
+{
+  "name": "@agent-mesh/sdk",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Provider-agnostic LLM client. ProviderAdapter interface + AzureOpenAIAdapter + AnthropicAdapter. Emits OpenTelemetry-shaped cost/latency telemetry per call.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stxkxs/agent-mesh.git",
+    "directory": "packages/sdk"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./adapters/azure-openai": {
+      "types": "./dist/adapters/azure-openai.d.ts",
+      "import": "./dist/adapters/azure-openai.js"
+    },
+    "./adapters/anthropic": {
+      "types": "./dist/adapters/anthropic.d.ts",
+      "import": "./dist/adapters/anthropic.js"
+    },
+    "./telemetry": {
+      "types": "./dist/telemetry.d.ts",
+      "import": "./dist/telemetry.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@agent-mesh/core": "workspace:*",
+    "@agent-mesh/pricing": "workspace:*",
+    "@anthropic-ai/sdk": "^0.95.2",
+    "@azure/identity": "^4.13.1",
+    "@azure/openai": "^2.0.0",
+    "@opentelemetry/api": "^1.9.1",
+    "openai": "^6.5.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@agent-mesh/config": "workspace:*",
+    "@types/node": "^25.7.0"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
