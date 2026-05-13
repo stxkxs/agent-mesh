@@ -80,5 +80,3 @@ If the budget was raised: file a follow-up to revisit in 30 days — never let a
 ## Why this is dual-approval
 
 A unilateral disengage by a compromised operator could re-enable spend at unbounded rate. PIM activation requires either MFA + reason (single-actor tenant policies) or MFA + reason + a second approver's click (the more common org policy). Either way, the activation is logged and traceable.
-
-This mirrors claudium's SSM Change Manager dual-approval pattern on the AWS side — same shape, Azure primitives.

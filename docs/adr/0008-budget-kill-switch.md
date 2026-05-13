@@ -19,7 +19,7 @@ We want the kill-switch to be:
 - **Surgical** — affects only the workspace, not the whole subscription
 - **Reversible** — operator can restore service after triage
 - **Auditable** — every engage + disengage event is in AAD audit logs
-- **Dual-approval-required** — no single operator can disengage unilaterally (matches claudium's SSM Change Manager pattern on AWS)
+- **Dual-approval-required** — no single operator can disengage unilaterally
 
 ## Decision
 
@@ -33,7 +33,7 @@ Mechanism:
 4. Pods running with the workspace's ServiceAccount can no longer mint AAD access tokens — Key Vault reads fail with 401, provider API calls fail with 401
 5. The pod stays alive (we do NOT kill the deployment); load builds up in upstream queues until operators investigate
 
-Recovery requires PIM-elevated `WorkspaceAdmin` activation (MFA + optional second approver per tenant policy), then `terraform apply` to recreate the federated credentials. This is the agent-mesh equivalent of claudium's SSM Change Manager dual approval — same shape, native Azure primitives.
+Recovery requires PIM-elevated `WorkspaceAdmin` activation (MFA + optional second approver per tenant policy), then `terraform apply` to recreate the federated credentials. The dual-approval property is enforced by the PIM activation flow itself, not by a custom workflow.
 
 ## Why not annotate the AKS deployment or scale it to zero?
 

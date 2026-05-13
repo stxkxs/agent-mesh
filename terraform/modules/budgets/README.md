@@ -57,23 +57,11 @@ The pod doesn't crash — it stays alive but every outbound auth call fails with
 1. Elevates via PIM (requires MFA + a second approver if your tenant policy mandates it)
 2. Re-creates the federated credentials with `terraform apply` (the credentials module will detect drift and recreate)
 
-This is the agent-mesh equivalent of claudium's SSM Change Manager dual-approval pattern.
+Dual-approval is enforced by the PIM activation flow itself — single-actor tenant policies require MFA + reason; org-wide policies typically add an approver workflow.
 
 ## Post-apply manual step (Graph permissions)
 
 The Logic App's managed identity needs `Application.ReadWrite.OwnedBy` on Microsoft Graph to delete federated credentials. This grant cannot be automated via Terraform's `azuread` provider — it requires Global Admin / Privileged Role Admin consent. The module emits the exact `az rest` invocation as the `kill_switch_post_apply_steps` output; run it once after `apply`.
-
-## What this replaces
-
-Claudium's `BudgetGuard` construct on AWS does the same thing with AWS Budgets + SNS + an SSM Automation runbook + tag-deny on Secrets Manager. The Azure version maps:
-
-| Concept                 | AWS (claudium)                                             | Azure (agent-mesh)                                       |
-| ----------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
-| Budget signal           | AWS Budgets                                                | Azure Consumption Budget                                 |
-| Notification fanout     | SNS topic                                                  | Action Group                                             |
-| Kill-switch executor    | SSM Automation document                                    | Logic App                                                |
-| Access denial mechanism | `claudium:kill-switch=engaged` tag-deny on Secrets Manager | Federated credentials deleted on the workspace's AAD app |
-| Dual-approval recovery  | SSM Change Manager                                         | AAD PIM                                                  |
 
 ## ADRs
 

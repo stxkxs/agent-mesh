@@ -34,8 +34,6 @@ Options considered:
 - **Indexing policy**: include `/*`, exclude `/payload/?` — we point-read by id + agent_id; we don't query the payload, so don't pay for indexing it.
 - **RBAC**: workload SP gets the built-in `Cosmos DB Built-in Data Contributor` role (document CRUD without any management plane access).
 
-Mirrors claudium's DynamoDB-with-TTL choice on AWS. Same shape, Azure primitives.
-
 ## Consequences
 
 **Positive**

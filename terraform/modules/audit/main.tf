@@ -8,8 +8,8 @@
  *           ↳ Capture-to-Blob writes Avro files into the audit container
  *             at yyyy/mm/dd/hh/<eh>-<partition>-<offset>.avro
  *           ↳ Synapse Serverless workspace exposes a SQL endpoint over the
- *             container; analysts run `claudium_token_spend_by_workspace`
- *             style queries against external tables.
+ *             container; analysts run `token_spend_by_workspace` style
+ *             queries against external tables.
  *
  * Why Event Hubs + Capture (vs. direct OTel→Blob exporter): Event Hubs
  * Capture is a managed, idempotent, schema-enforcing write path with

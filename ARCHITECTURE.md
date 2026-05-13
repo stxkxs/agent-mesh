@@ -67,7 +67,7 @@ Hard budget breach (≥120%) triggers an Azure Logic App that:
 2. Disables every Service Bus subscription used by the workspace
 3. Pauses KEDA `ScaledObject` to drop replicas to 0
 
-**Recovery is human-only.** A PIM-elevated AAD admin (with MFA + approver) restores the trust. There is no API to do this without going through PIM. This mirrors the dual-approval-required pattern from claudium's SSM Change Manager kill-switch.
+**Recovery is human-only.** A PIM-elevated AAD admin (with MFA + approver) restores the trust. There is no API to do this without going through PIM. Dual-approval is enforced by the PIM activation flow.
 
 ### Observability
 

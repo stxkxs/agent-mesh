@@ -1,6 +1,6 @@
 # identity
 
-Six AAD groups per workspace, each scoped to a least-privilege intersection of workspace resources. Replaces claudium's six Identity Center permission sets + the SCP + permission-boundary stack on AWS.
+Six AAD groups per workspace, each scoped to a least-privilege intersection of workspace resources.
 
 ```hcl
 module "identity" {
@@ -38,9 +38,9 @@ For Admin tiers (PlatformAdmin, WorkspaceAdmin), wire up [Azure AD Privileged Id
 - Activation requires MFA + reason
 - Activation events stream to your SIEM
 
-## What this replaces
+## Org-wide policy
 
-Claudium had SCPs (Service Control Policies) at the AWS Organizations level enforcing universal denies. Azure doesn't have a direct SCP equivalent — the closest is **Azure Policy** at Management Group scope (M3 will surface a `policies` module for that). For now the per-RBAC approach is the workhorse.
+Azure RBAC is additive — agent-mesh ships scoped role assignments per group, not org-wide denies. For tenant-wide bans (e.g. "no public Storage anywhere"), pair with **Azure Policy** at Management Group scope. A future `policies` module will package the agent-mesh-shaped policy assignments; for now it's operator-side.
 
 ## ADRs
 

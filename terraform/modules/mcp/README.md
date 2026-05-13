@@ -58,17 +58,6 @@ backend_fqdns = {
 
 `https://mcp.platform.example.com/filesystem/list` → AKS service `filesystem-readonly.mcp.svc.cluster.local:8080/filesystem/list`.
 
-## What this replaces
-
-Claudium's `McpGateway` construct on AWS does the same thing with ALB + WAF + ACM. The Azure version maps:
-
-| AWS (claudium)        | Azure (agent-mesh)                               |
-| --------------------- | ------------------------------------------------ |
-| ALB                   | Application Gateway v2                           |
-| ACM cert (auto-renew) | Key Vault Secret (PFX, operator-managed renewal) |
-| WAFv2 web ACL         | WAF v2 policy                                    |
-| ALB target groups     | Backend pools + HTTP settings                    |
-
 ## ADRs
 
 - [ADR-0010 — Application Gateway v2 for MCP ingress](../../../docs/adr/0010-appgw-for-mcp.md)

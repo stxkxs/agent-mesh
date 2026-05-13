@@ -2,10 +2,11 @@ import { CallEventSchema, type CallEvent } from '@agent-mesh/core/schemas';
 import { trace, type Span, type Tracer } from '@opentelemetry/api';
 
 /**
- * OpenTelemetry-shaped emission for a single CallEvent. This is the
- * agent-mesh equivalent of claudium's EMF cost-event log: a structured
+ * OpenTelemetry-shaped emission for a single CallEvent. A structured
  * record that the OTel Collector forwards to Datadog Logs (parsed via a
- * log pipeline that promotes `dd.*` fields to attributes + metrics).
+ * log pipeline that promotes `agent_mesh.*` fields to attributes + metrics)
+ * AND attached as span attributes on the active OTel span so Datadog APM
+ * picks up token / cost / latency-per-model breakdowns automatically.
  *
  * We don't depend on the Datadog Node tracer here — only `@opentelemetry/api`.
  * The OTel SDK + DD OTLP exporter are wired by the runtime entrypoint.

@@ -1,7 +1,6 @@
 /**
  * identity — six AAD groups per workspace, each mapped to a least-privilege
- * scope. Replaces claudium's six Identity Center permission sets + the SCP
- * + permission-boundary stack on AWS.
+ * scope.
  *
  *   PlatformAdmin   — Workspace-level Contributor + RBAC Admin. Can stand
  *                     up new projects.

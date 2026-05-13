@@ -1,45 +1,48 @@
-# ADR-0006 — Azure Policy + AAD groups in lieu of SCPs
+# ADR-0006 — Azure Policy + AAD groups for tenant-wide guardrails
 
 **Status:** accepted · 2026-05-12
 
 ## Context
 
-AWS Organizations supports **SCPs** — Service Control Policies that apply at the Org / OU / Account level and act as an upper bound on any IAM action, regardless of identity policy. Claudium leans on SCPs heavily: `DenyClaudeEgressOutsideGateway`, `EnforceMandatoryTags`, `DenyKMSWithoutEncryptionContext`. These don't grant access; they shrink the universe of grantable actions.
+We need two access-control tiers:
 
-Azure has no direct SCP equivalent. The closest pieces:
+1. **Per-workspace least-privilege RBAC** — Developer can write blobs but can't grant access; Auditor reads audit metadata but can't decrypt model data; etc.
+2. **Org-wide universal denies** — "no public Storage anywhere in this subscription"; "every resource must carry mandatory tags"; "no Key Vault without purge protection."
 
-1. **Azure Policy** at **Management Group scope** — declarative compliance rules, can `Deny` or `DeployIfNotExists`. Applies to subscriptions in the MG.
-2. **AAD permission boundaries** don't exist. Azure RBAC is purely additive.
+Azure's primitives for these:
+
+1. **AAD groups + RBAC role assignments** at specific scopes — additive, well-supported, scriptable via Terraform.
+2. **Azure Policy** at **Management Group scope** — declarative compliance rules, can `Deny` or `DeployIfNotExists`. Applies to all subscriptions under the MG.
 3. **Azure ABAC** — condition expressions on role assignments (preview-stable for Storage, Key Vault). Lets you say "Reader, but only on objects tagged X."
 
-The closest functional equivalent of SCPs in Azure is **Azure Policy at MG scope + AAD group RBAC + ABAC conditions where supported**.
+Azure RBAC by itself is purely additive — there's no "permission boundary" concept. The universal-deny tier requires Azure Policy at MG scope.
 
 ## Decision
 
-For M2, **agent-mesh ships the AAD groups + RBAC role assignments (the `identity` module)** as the workhorse access-control story. We do NOT ship Management Group Azure Policy assignments in M2 — those are org-shaped (the customer's MG hierarchy varies wildly) and we'd be making opinionated choices that don't generalize.
+**Ship AAD groups + scoped RBAC in the `identity` module today; defer Management Group Policy assignments to a future module.**
 
-In M3, we'll ship a separate `policies` module that takes a Management Group scope as input and creates the agent-mesh-equivalent Azure Policy definitions + assignments:
+The `identity` module (M2) provides six per-workspace AAD groups (PlatformAdmin / WorkspaceAdmin / Developer / Auditor / FinOps / ReadOnly) with scoped role assignments at specific resource IDs. Auditor decrypts the logs CMK only; never the data CMK. Developer gets Secrets Officer on Key Vault + Storage Blob Data Contributor — no infra mutation.
 
-- `Deny-PublicNetworkAccess-OnStorage` (matches claudium's `DenyClaudeEgressOutsideGateway`)
-- `Deny-Untagged-Resources` (matches `EnforceMandatoryTags`)
-- `Deny-KeyVault-PurgeProtection-Disabled` (no claudium equivalent; new for Azure context)
+We do **not** ship Management Group Azure Policy assignments yet. Customer MG hierarchies vary too widely (single-tenant orgs, parent-child MG trees, landing-zone-pattern MGs) for one opinionated set of assignments to fit. The future `policies` module will take an MG scope as input and ship a curated agent-mesh policy set:
+
+- `Deny-PublicNetworkAccess-OnStorage`
+- `Deny-Untagged-Resources` (mandatory tag enforcement)
+- `Deny-KeyVault-PurgeProtection-Disabled`
 - `Audit-Resources-Without-PrivateLink` (governance, not deny)
-
-For M2, the `identity` module's per-RBAC restrictions (Auditor decrypts logs CMK only, never data CMK) are the load-bearing control.
 
 ## Consequences
 
 **Positive**
 
-- M2 is shippable today without making decisions about the customer's MG hierarchy.
-- The Auditor / Developer / WorkspaceAdmin separation in RBAC already provides most of the practical SCP value at workspace scope.
-- M3's `policies` module gets to be a clean opt-in: deploy only if you have a MG scope to attach it to.
+- The `identity` module is shippable today without making decisions about the customer's MG hierarchy.
+- The Auditor / Developer / WorkspaceAdmin separation in RBAC already provides most of the practical universal-deny value at workspace scope.
+- The future `policies` module gets to be a clean opt-in: deploy only if you have an MG scope to attach it to.
 
 **Negative**
 
-- We don't have a single deny-all-of-X enforcement tier in M2. A misconfigured WorkspaceAdmin could, e.g., grant their group `Storage Blob Data Reader` on the data CMK-protected container (the role assignment would land; the decrypt would still fail because of the CMK access policy). The defense-in-depth holds, but the deny isn't single-source.
-- Tag enforcement happens via the `workspace` module's defaults today; an off-module resource creation could skip the tag policy. M3 fixes this with `Audit-Resources-Without-RequiredTags`.
+- We don't have a single deny-all-of-X enforcement tier yet. A misconfigured WorkspaceAdmin could, e.g., grant their group `Storage Blob Data Reader` on the data CMK-protected container (the role assignment would land; the decrypt would still fail because of the CMK access policy). The defense-in-depth holds, but the deny isn't single-source.
+- Mandatory tag enforcement happens via the `workspace` module's defaults today; an off-module resource creation could skip the tag policy. The `policies` module fixes this with `Audit-Resources-Without-RequiredTags`.
 
 **Neutral**
 
-- Azure ABAC is still preview for many services. We don't bet on it as the primary mechanism for M2; we use scoped role assignments at specific resource IDs instead.
+- Azure ABAC is still preview for many services. We don't bet on it as the primary mechanism; we use scoped role assignments at specific resource IDs instead.

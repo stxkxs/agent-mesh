@@ -46,7 +46,7 @@ You're prototyping. You have one workload, one model, no compliance requirements
 
 You have unusual constraints agent-mesh doesn't fit:
 
-- Multi-cloud platform spanning Azure + GCP + AWS — agent-mesh is Azure-shaped (and claudium is AWS-shaped)
+- Multi-cloud platform spanning Azure + GCP + AWS — agent-mesh is Azure-shaped
 - A custom IaC tool (Pulumi-only shop, Crossplane shop)
 - Strict vendor avoidance (Datadog ruled out, Workload Identity ruled out)
 - Workload-specific primitives we don't model (real-time streaming, voice, custom multi-modal pipelines)
