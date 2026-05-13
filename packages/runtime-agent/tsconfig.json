@@ -1,0 +1,11 @@
+{
+  "extends": "@agent-mesh/config/tsconfig/lib",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "references": [{ "path": "../core" }, { "path": "../sdk" }],
+  "include": ["src/**/*"],
+  "exclude": ["src/**/__tests__/**", "src/**/*.test.ts", "dist", "node_modules"]
+}

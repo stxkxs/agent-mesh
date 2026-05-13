@@ -1,0 +1,61 @@
+{
+  "name": "@agent-mesh/cli",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "agent-mesh CLI — init, doctor, workspace, skill, prompt, eval, budget, audit commands.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stxkxs/agent-mesh.git",
+    "directory": "packages/cli"
+  },
+  "bin": {
+    "agent-mesh": "./bin/agent-mesh.mjs"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "import": "./dist/config.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@agent-mesh/core": "workspace:*",
+    "@agent-mesh/runtime-skills-builder": "workspace:*",
+    "@clack/prompts": "^1.4.0",
+    "commander": "^14.0.3",
+    "jiti": "^2.7.0",
+    "picocolors": "^1.1.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@agent-mesh/config": "workspace:*",
+    "@types/node": "^25.7.0"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -14,5 +14,7 @@ Nygard-format ADRs covering the consequential choices in agent-mesh.
 | [0008](./0008-budget-kill-switch.md)              | Budget kill-switch via federated cred removal | accepted |
 | [0009](./0009-cosmos-for-idempotency.md)          | Cosmos DB NoSQL for idempotency state         | accepted |
 | [0010](./0010-appgw-for-mcp.md)                   | Application Gateway v2 + WAF v2 for MCP       | accepted |
+| [0011](./0011-five-layer-guardrails.md)           | 5-layer guardrail stack                       | accepted |
+| [0012](./0012-eval-scorer-composition.md)         | Eval scorer composition                       | accepted |
 
-Future ADRs land here as M5-M6 work surfaces decisions worth recording — examples: PromptFlow runtime vs. roll-our-own evals, KEDA scaler tuning, prompt cache strategy.
+Future ADRs land here as M6+ work surfaces decisions worth recording — examples: KEDA scaler tuning, prompt cache strategy, reference-app deployment shape.

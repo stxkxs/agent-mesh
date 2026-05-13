@@ -1,0 +1,55 @@
+{
+  "name": "@agent-mesh/runtime-evals",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Eval suite runner. runSuite orchestrator + 4 scorers (exact-match, zod-shape, word-overlap, semantic). Per-case timeout + Blob upload + EvalScore OTel emission.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stxkxs/agent-mesh.git",
+    "directory": "packages/runtime-evals"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./scorers": {
+      "types": "./dist/scorers.d.ts",
+      "import": "./dist/scorers.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@agent-mesh/core": "workspace:*",
+    "@azure/identity": "^4.13.1",
+    "@azure/storage-blob": "^12.31.0",
+    "@opentelemetry/api": "^1.9.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@agent-mesh/config": "workspace:*",
+    "@types/node": "^25.7.0"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
