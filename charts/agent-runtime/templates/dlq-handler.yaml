@@ -1,0 +1,49 @@
+{{- if .Values.dlqHandler.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "agent-runtime.fullname" . }}-dlq
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agent-runtime.labels" . | nindent 4 }}
+    agent-mesh.io/role: dlq-handler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "agent-runtime.selectorLabels" . | nindent 6 }}
+      agent-mesh.io/role: dlq-handler
+  template:
+    metadata:
+      labels:
+        {{- include "agent-runtime.selectorLabels" . | nindent 8 }}
+        agent-mesh.io/role: dlq-handler
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: {{ include "agent-runtime.serviceAccount" . }}
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: dlq-handler
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "/app/dist/dlq-handler.js"]
+          env:
+            - name: AGENT_MESH_WORKSPACE
+              value: {{ .Values.workspace | quote }}
+            - name: AGENT_MESH_PROJECT
+              value: {{ .Values.project | quote }}
+            - name: SERVICEBUS_NAMESPACE
+              value: {{ .Values.servicebus.namespace | quote }}
+            - name: SERVICEBUS_QUEUE
+              value: {{ printf "%s/$DeadLetterQueue" .Values.servicebus.queue | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ printf "http://%s" .Values.otel.endpoint | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: "agent-mesh-dlq"
+          resources: {{- toYaml .Values.dlqHandler.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+{{- end }}

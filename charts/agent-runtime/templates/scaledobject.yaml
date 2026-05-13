@@ -1,0 +1,32 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ include "agent-runtime.fullname" . }}-auth
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "agent-runtime.labels" . | nindent 4 }}
+spec:
+  podIdentity:
+    provider: azure-workload
+    identityId: {{ .Values.workloadIdentity.clientId | quote }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "agent-runtime.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "agent-runtime.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "agent-runtime.fullname" . }}
+  minReplicaCount: {{ .Values.servicebus.minReplicas }}
+  maxReplicaCount: {{ .Values.servicebus.maxReplicas }}
+  pollingInterval: 15
+  cooldownPeriod: 60
+  triggers:
+    - type: azure-servicebus
+      authenticationRef:
+        name: {{ include "agent-runtime.fullname" . }}-auth
+      metadata:
+        namespace: {{ regexReplaceAll "\\.servicebus\\.windows\\.net$" .Values.servicebus.namespace "" | quote }}
+        queueName: {{ .Values.servicebus.queue | quote }}
+        messageCount: {{ .Values.servicebus.messageCountPerReplica | quote }}

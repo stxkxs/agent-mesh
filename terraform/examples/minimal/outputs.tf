@@ -96,3 +96,33 @@ output "cost_view_definitions" {
   description = "Synapse SQL — paste into the audit module's SQL endpoint to create cost views over the export."
   value       = var.deploy_cost ? module.cost[0].cost_view_definitions : null
 }
+
+output "agent_runtime_servicebus_namespace" {
+  description = "Service Bus namespace FQDN. Pass to charts/agent-runtime --set servicebus.namespace."
+  value       = var.deploy_agent_runtime ? module.agent_runtime[0].servicebus_namespace_hostname : null
+}
+
+output "agent_runtime_cosmos_endpoint" {
+  description = "Cosmos DB endpoint. Pass to charts/agent-runtime --set cosmos.endpoint."
+  value       = var.deploy_agent_runtime ? module.agent_runtime[0].cosmos_endpoint : null
+}
+
+output "agent_runtime_keda_snippet" {
+  description = "KEDA TriggerAuthentication + ScaledObject snippet — paste into your cluster (or use charts/agent-runtime which templates this automatically)."
+  value       = var.deploy_agent_runtime ? module.agent_runtime[0].keda_trigger_auth_snippet : null
+}
+
+output "mcp_gateway_url" {
+  description = "Effective frontend URL for the MCP gateway."
+  value       = var.deploy_mcp_gateway && var.deploy_network ? module.mcp[0].frontend_url : null
+}
+
+output "mcp_gateway_public_ip" {
+  description = "Public IP of the MCP gateway. Wire your DNS to this address."
+  value       = var.deploy_mcp_gateway && var.deploy_network ? module.mcp[0].public_ip : null
+}
+
+output "mcp_gateway_warnings" {
+  description = "Configuration warnings from the MCP gateway (HTTP-only, missing DNS name, no backends)."
+  value       = var.deploy_mcp_gateway && var.deploy_network ? module.mcp[0].deployment_warnings : null
+}

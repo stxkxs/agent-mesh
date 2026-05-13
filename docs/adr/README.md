@@ -12,5 +12,7 @@ Nygard-format ADRs covering the consequential choices in agent-mesh.
 | [0006](./0006-azure-policy-vs-scps.md)            | Azure Policy + AAD groups in lieu of SCPs     | accepted |
 | [0007](./0007-datadog-dashboards-as-terraform.md) | Datadog dashboards as Terraform               | accepted |
 | [0008](./0008-budget-kill-switch.md)              | Budget kill-switch via federated cred removal | accepted |
+| [0009](./0009-cosmos-for-idempotency.md)          | Cosmos DB NoSQL for idempotency state         | accepted |
+| [0010](./0010-appgw-for-mcp.md)                   | Application Gateway v2 + WAF v2 for MCP       | accepted |
 
-Future ADRs land here as M4+ work surfaces decisions worth recording — examples: Cosmos for idempotency, AG2+WAF for MCP ingress, KEDA scaler on Service Bus depth.
+Future ADRs land here as M5-M6 work surfaces decisions worth recording — examples: PromptFlow runtime vs. roll-our-own evals, KEDA scaler tuning, prompt cache strategy.

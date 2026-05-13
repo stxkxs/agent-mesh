@@ -1,0 +1,75 @@
+## MCP server chart — generic template for one backend.
+##
+## Required: `name`, `image.repository`, `image.tag`.
+
+# Identity context.
+workspace: ''
+project: ''
+
+# Unique name for this MCP server (e.g. "filesystem-readonly"). Used in
+# the Service name + Application Gateway backend FQDN.
+name: ''
+
+# Container image.
+image:
+  repository: ''
+  tag: latest
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Replicas — typically 2 for redundancy; scale via HPA if traffic warrants.
+replicas: 2
+
+# Port the MCP server listens on inside the container.
+containerPort: 8080
+
+# Resources.
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+# Workload Identity — only set if the MCP server needs Azure access (e.g.
+# read from Storage, query Cosmos). If not, leave empty.
+workloadIdentity:
+  enabled: false
+  clientId: ''
+  tenantId: ''
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+# NetworkPolicy — only allow ingress from the Application Gateway subnet.
+# Calico (or another CNI that honors NetworkPolicy) must be enabled on AKS.
+networkPolicy:
+  enabled: true
+  appgatewaySubnetCidr: '10.40.15.0/24' # default from terraform/modules/network
+
+# HorizontalPodAutoscaler — opt-in if you want CPU-based scale-up beyond
+# the static replicas.
+hpa:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+# Health probe path. MCP servers should expose /healthz returning 200.
+healthProbe:
+  path: /healthz
+  port: 8080
+
+env: [] # additional env vars
+envFrom: [] # ConfigMap / Secret references
+
+priorityClassName: ''
+tolerations: []
+nodeSelector:
+  agentpool: mcp # default — schedule on the dedicated mcp node pool

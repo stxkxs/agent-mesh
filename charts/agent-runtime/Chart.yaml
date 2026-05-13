@@ -1,0 +1,18 @@
+apiVersion: v2
+name: agent-mesh-agent-runtime
+description: |
+  Agent runtime Deployment + KEDA ScaledObject + DLQ handler. The pod
+  reads from a Service Bus queue, drives a Claude / Azure OpenAI agent
+  loop via @agent-mesh/sdk, writes idempotency state to Cosmos, and
+  scales 0→N based on queue depth via KEDA.
+type: application
+version: 0.1.0
+appVersion: '0.1.0'
+home: https://github.com/stxkxs/agent-mesh
+maintainers:
+  - name: stxkxs
+keywords:
+  - agent
+  - llm
+  - keda
+  - workload-identity

@@ -128,3 +128,34 @@ module "cost" {
   anomaly_action_group_id = var.deploy_budgets ? module.budgets[0].action_group_id : null
   enable_synapse_views    = var.deploy_audit
 }
+
+module "agent_runtime" {
+  count  = var.deploy_agent_runtime ? 1 : 0
+  source = "../../modules/agent-runtime"
+
+  workspace_name             = module.workspace.workspace_name
+  project                    = var.project
+  resource_group_name        = module.workspace.resource_group_name
+  location                   = module.workspace.location
+  compliance_preset          = module.workspace.compliance_preset
+  log_analytics_workspace_id = module.workspace.log_analytics_workspace_id
+  tags                       = module.workspace.tags
+
+  agent_workload_principal_id = module.credentials.service_principal_object_id
+}
+
+module "mcp" {
+  count  = var.deploy_mcp_gateway && var.deploy_network ? 1 : 0
+  source = "../../modules/mcp"
+
+  workspace_name      = module.workspace.workspace_name
+  resource_group_name = module.workspace.resource_group_name
+  location            = module.workspace.location
+  tags                = module.workspace.tags
+
+  appgateway_subnet_id      = module.network[0].appgateway_subnet_id
+  key_vault_id              = module.workspace.key_vault_id
+  tls_certificate_secret_id = var.mcp_tls_certificate_secret_id
+  frontend_dns_name         = var.mcp_frontend_dns_name
+  backend_fqdns             = var.mcp_backend_fqdns
+}

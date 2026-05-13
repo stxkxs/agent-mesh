@@ -22,6 +22,8 @@ Composes every agent-mesh module via opt-in flags. The smallest deployment is wo
 | `deploy_observability = true` (M2) | Datadog dashboard (5 rows) + 9 monitors (p99 per model, error rate, cache-hit drop, eval regression, audit lag, spend anomaly). Requires `DD_API_KEY` + `DD_APP_KEY`.                                                             |
 | `deploy_budgets = true` (M3)       | Azure Consumption Budget scoped to the workspace RG with 50/80/100% actual + 80% forecast notifications + Logic App kill-switch on hard breach. Set `monthly_budget_usd`, `budget_email_subscribers`, `budget_webhook_endpoints`. |
 | `deploy_cost = true` (M3)          | Cost Management Export to ADLS daily + cost reconciliation Synapse views (EMF-vs-CUR) + Cost Anomaly Detection routed through the budgets action group.                                                                           |
+| `deploy_agent_runtime = true` (M4) | Service Bus namespace + queues with DLQ + Cosmos DB (Serverless, AAD-only, partitioned `/agent_id`, 7d TTL) + RBAC for the workload identity. Data plane the `charts/agent-runtime` Helm release expects.                         |
+| `deploy_mcp_gateway = true` (M4)   | Application Gateway v2 + WAF v2 + Public IP + listener for MCP ingress. Requires `deploy_network=true`. Set `mcp_tls_certificate_secret_id` + `mcp_frontend_dns_name` + `mcp_backend_fqdns` for production.                       |
 
 ## Quick start
 

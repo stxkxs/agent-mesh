@@ -104,6 +104,36 @@ variable "budget_webhook_endpoints" {
   default = []
 }
 
+variable "deploy_agent_runtime" {
+  description = "Whether to provision Service Bus + Cosmos for the agent runtime data plane."
+  type        = bool
+  default     = false
+}
+
+variable "deploy_mcp_gateway" {
+  description = "Whether to provision the MCP Application Gateway v2 + WAF. Requires deploy_network = true."
+  type        = bool
+  default     = false
+}
+
+variable "mcp_tls_certificate_secret_id" {
+  description = "Key Vault Secret ID with PFX-encoded TLS cert for the MCP gateway. Leave null for HTTP-only (sandbox)."
+  type        = string
+  default     = null
+}
+
+variable "mcp_frontend_dns_name" {
+  description = "DNS hostname for the MCP gateway listener. Leave null for IP-based access."
+  type        = string
+  default     = null
+}
+
+variable "mcp_backend_fqdns" {
+  description = "Map of path → AKS service FQDN. Each becomes a backend pool + path rule on the gateway."
+  type        = map(string)
+  default     = {}
+}
+
 variable "tags" {
   description = "Additional tags."
   type        = map(string)
