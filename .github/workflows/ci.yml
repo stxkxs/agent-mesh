@@ -100,16 +100,22 @@ jobs:
             echo "::endgroup::"
           done
 
-  tfsec:
-    name: tfsec
+  trivy:
+    name: trivy config
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: aquasecurity/tfsec-action@b466648d6e39e7c75324f25d83891162a721f2d6 # v1.0.3
+      - uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6c643964 # 0.28.0
         with:
-          working_directory: terraform
-          soft_fail: false
+          scan-type: config
+          scan-ref: terraform
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+          format: table
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: 'true'
 
   helm-lint:
     name: helm lint
