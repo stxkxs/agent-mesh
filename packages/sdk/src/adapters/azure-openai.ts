@@ -1,8 +1,8 @@
-import { ConfigurationError, ProviderError, RateLimitedError } from '@agent-mesh/core/errors';
+import { ConfigurationError, ProviderError } from '@agent-mesh/core/errors';
 import { computeCostUsd } from '@agent-mesh/pricing';
 import { AzureOpenAI } from 'openai';
 
-import { emitCallEvent } from '../telemetry.js';
+import { withTelemetry } from '../telemetry.js';
 
 import type {
   ErrorClass,
@@ -113,9 +113,6 @@ export class AzureOpenAIAdapter implements ProviderAdapter {
 
   public async messages(params: MessagesParams): Promise<MessagesResponse> {
     const deployment = this.resolveModel(params.model);
-    const requestId = `req-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
-    const startedAt = new Date();
-    const startNs = process.hrtime.bigint();
 
     // Translate the unified messages shape into Azure OpenAI chat-completion
     // params. Azure OpenAI conforms to the OpenAI chat-completions schema,
@@ -150,120 +147,75 @@ export class AzureOpenAIAdapter implements ProviderAdapter {
       },
     }));
 
-    try {
-      const raw = await this.client.chat.completions.create({
-        model: deployment,
-        messages,
-        max_completion_tokens: params.max_tokens,
-        ...(params.temperature === undefined ? {} : { temperature: params.temperature }),
-        ...(params.stop_sequences === undefined ? {} : { stop: [...params.stop_sequences] }),
-        ...(tools === undefined || tools.length === 0 ? {} : { tools }),
-        ...(params.tool_choice === undefined ? {} : { tool_choice: 'auto' as const }),
-      });
-      const durationMs = Number(process.hrtime.bigint() - startNs) / 1_000_000;
-      const choice = raw.choices[0];
-      if (choice === undefined) {
-        throw new ProviderError('Azure OpenAI returned no choices');
-      }
-      const tokens = {
-        inputTokens: raw.usage?.prompt_tokens ?? 0,
-        outputTokens: raw.usage?.completion_tokens ?? 0,
-        cacheCreationInputTokens: 0,
-        cacheReadInputTokens: raw.usage?.prompt_tokens_details?.cached_tokens ?? 0,
-      };
-      const costUsd = this.estimateCost(params.model, tokens);
-      const content = [
-        ...(choice.message.content === null
-          ? []
-          : [{ type: 'text', text: choice.message.content } as Record<string, unknown>]),
-        ...(choice.message.tool_calls ?? [])
-          .filter(
-            (
-              tc,
-            ): tc is typeof tc & {
-              type: 'function';
-              function: { name: string; arguments: string };
-            } => tc.type === 'function',
-          )
-          .map((tc) => ({
-            type: 'tool_use',
-            id: tc.id,
-            name: tc.function.name,
-            input: JSON.parse(tc.function.arguments) as unknown,
-          })),
-      ];
-
-      emitCallEvent({
+    return withTelemetry(
+      {
+        provider: 'azure-openai',
         workspace: this.workspace,
         project: this.project,
         tenant: this.tenant,
-        ...(params.agent === undefined ? {} : { agent: params.agent }),
-        provider: 'azure-openai',
+        classifyError: (e) => this.classifyError(e),
         model: params.model,
-        operation: params.operation ?? 'messages',
-        startedAt: startedAt.toISOString(),
-        durationMs: Math.round(durationMs),
-        tokens,
-        costUsd,
-        status: 'ok',
-        correlationId: params.correlationId,
-        requestId,
-        cacheHit: tokens.cacheReadInputTokens > 0,
-        extensions: deployment === params.model ? {} : { deployment },
-      });
-
-      return {
-        id: raw.id,
-        provider: 'azure-openai',
-        model: params.model,
-        content,
-        stopReason: this.mapStopReason(choice.finish_reason),
-        usage: tokens,
-        costUsd,
-        durationMs: Math.round(durationMs),
-        cacheHit: tokens.cacheReadInputTokens > 0,
-      };
-    } catch (e: unknown) {
-      const durationMs = Number(process.hrtime.bigint() - startNs) / 1_000_000;
-      const errorClass = this.classifyError(e);
-      emitCallEvent({
-        workspace: this.workspace,
-        project: this.project,
-        tenant: this.tenant,
-        ...(params.agent === undefined ? {} : { agent: params.agent }),
-        provider: 'azure-openai',
-        model: params.model,
-        operation: params.operation ?? 'messages',
-        startedAt: startedAt.toISOString(),
-        durationMs: Math.round(durationMs),
-        tokens: {
-          inputTokens: 0,
-          outputTokens: 0,
+        ...(deployment === params.model ? {} : { deployment }),
+      },
+      params,
+      async () => {
+        const raw = await this.client.chat.completions.create({
+          model: deployment,
+          messages,
+          max_completion_tokens: params.max_tokens,
+          ...(params.temperature === undefined ? {} : { temperature: params.temperature }),
+          ...(params.stop_sequences === undefined ? {} : { stop: [...params.stop_sequences] }),
+          ...(tools === undefined || tools.length === 0 ? {} : { tools }),
+          ...(params.tool_choice === undefined
+            ? {}
+            : { tool_choice: translateToolChoice(params.tool_choice) }),
+        });
+        const choice = raw.choices[0];
+        if (choice === undefined) {
+          throw new ProviderError('Azure OpenAI returned no choices');
+        }
+        const tokens = {
+          inputTokens: raw.usage?.prompt_tokens ?? 0,
+          outputTokens: raw.usage?.completion_tokens ?? 0,
           cacheCreationInputTokens: 0,
-          cacheReadInputTokens: 0,
-        },
-        costUsd: 0,
-        status: errorClass === 'RateLimit' || errorClass === 'Overloaded' ? 'throttled' : 'error',
-        errorClass,
-        correlationId: params.correlationId,
-        requestId,
-        cacheHit: false,
-        extensions: {
-          errorMessage: e instanceof Error ? e.message : String(e),
-          ...(deployment === params.model ? {} : { deployment }),
-        },
-      });
-      if (errorClass === 'RateLimit' || errorClass === 'Overloaded') {
-        throw new RateLimitedError(
-          `Azure OpenAI ${errorClass}: ${e instanceof Error ? e.message : String(e)}`,
-          { provider: 'azure-openai', model: params.model, deployment, errorClass },
-        );
-      }
-      throw new ProviderError(
-        `Azure OpenAI ${errorClass}: ${e instanceof Error ? e.message : String(e)}`,
-        { provider: 'azure-openai', model: params.model, deployment, errorClass },
-      );
-    }
+          cacheReadInputTokens: raw.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+        };
+        const costUsd = this.estimateCost(params.model, tokens);
+        const content = [
+          ...(choice.message.content === null
+            ? []
+            : [{ type: 'text', text: choice.message.content } as Record<string, unknown>]),
+          ...(choice.message.tool_calls ?? [])
+            .filter(
+              (
+                tc,
+              ): tc is typeof tc & {
+                type: 'function';
+                function: { name: string; arguments: string };
+              } => tc.type === 'function',
+            )
+            .map((tc) => ({
+              type: 'tool_use',
+              id: tc.id,
+              name: tc.function.name,
+              input: JSON.parse(tc.function.arguments) as unknown,
+            })),
+        ];
+
+        return {
+          id: raw.id,
+          provider: 'azure-openai',
+          model: params.model,
+          content,
+          stopReason: this.mapStopReason(choice.finish_reason),
+          usage: tokens,
+          costUsd,
+          durationMs: 0, // overwritten by withTelemetry
+          cacheHit: tokens.cacheReadInputTokens > 0,
+          rawTokens: tokens,
+        };
+      },
+    );
   }
 
   private resolveModel(model: ModelId): string {
@@ -290,3 +242,31 @@ export class AzureOpenAIAdapter implements ProviderAdapter {
     }
   }
 }
+
+/**
+ * Translate the unified `tool_choice` shape onto OpenAI's `tool_choice` enum.
+ *
+ *   { type: 'auto' }              → 'auto'        — let the model decide
+ *   { type: 'any' }               → 'required'    — must call at least one tool
+ *   { type: 'tool', name: 'foo' } → { type: 'function', function: { name: 'foo' } }
+ *
+ * Without this, the agent loop's `tool_choice: { type: 'any' }` (which
+ * forces the model to emit via `submit_final_output`) silently degraded
+ * to OpenAI's default 'auto', weakening structured-output enforcement.
+ */
+const translateToolChoice = (tc: {
+  type: 'auto' | 'any' | 'tool';
+  name?: string;
+}): 'auto' | 'required' | { type: 'function'; function: { name: string } } => {
+  switch (tc.type) {
+    case 'auto':
+      return 'auto';
+    case 'any':
+      return 'required';
+    case 'tool':
+      if (tc.name === undefined) {
+        throw new ProviderError(`tool_choice type='tool' requires a name; got undefined`);
+      }
+      return { type: 'function', function: { name: tc.name } };
+  }
+};

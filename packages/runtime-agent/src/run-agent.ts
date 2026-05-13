@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { GuardrailViolationError, SchemaValidationError } from '@agent-mesh/core/errors';
 import { toJSONSchema } from 'zod';
 
+import { createMcpBreaker } from './circuit-breaker.js';
+
 import type { AgentDefinition } from './define-agent.js';
 import type { ToolBinding } from './tools.js';
 import type { ProviderAdapter } from '@agent-mesh/sdk';
@@ -83,6 +85,21 @@ export const runAgent = async <O>(
   ];
   const lookup = toolsByName(agent.tools);
 
+  // One opossum circuit breaker per tool. Wraps `execute` so a flapping
+  // MCP backend short-circuits rather than blocking the loop on repeated
+  // timeouts. Lifetime: per `runAgent` invocation; state isn't shared
+  // across calls (a long-lived process would lift these up to module
+  // scope keyed by agent.id + tool.name).
+  const breakers = new Map<string, ReturnType<typeof createMcpBreaker<unknown, [unknown]>>>();
+  for (const t of agent.tools) {
+    breakers.set(
+      t.name,
+      createMcpBreaker<unknown, [unknown]>(async (i) => t.execute(i), {
+        name: `${agent.id}.${t.name}`,
+      }),
+    );
+  }
+
   const messages: {
     role: 'user' | 'assistant';
     content: string | Record<string, unknown>[];
@@ -156,7 +173,13 @@ export const runAgent = async <O>(
       }
       try {
         const inputParsed = binding.input.parse(useTyped.input);
-        const result = await binding.execute(inputParsed);
+        // Route through the circuit breaker so a flapping tool short-
+        // circuits instead of timing out repeatedly.
+        const breaker = breakers.get(useTyped.name);
+        const result =
+          breaker === undefined
+            ? await binding.execute(inputParsed)
+            : await breaker.fire(inputParsed);
         // Layer 2 — egress schema applied to tool output before re-feeding
         const egressed = binding.egress.parse(result);
         toolResults.push({

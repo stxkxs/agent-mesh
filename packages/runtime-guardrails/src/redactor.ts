@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 
-import { ConfigurationError } from '@agent-mesh/core/errors';
+import { ConfigurationError, GuardrailViolationError } from '@agent-mesh/core/errors';
 
 import { DEFAULT_PII_RULES, type PIIRule } from './pii-rules.js';
 
@@ -52,9 +52,16 @@ export const redact = (
 
   for (const rule of rules) {
     out = out.replace(rule.pattern, (match) => {
+      // Optional secondary validation — lets shape-then-checksum rules
+      // (credit card Luhn) ignore matches that don't pass the second test.
+      if (rule.validate !== undefined && !rule.validate(match)) {
+        return match;
+      }
       counts.set(rule.entityType, (counts.get(rule.entityType) ?? 0) + 1);
       if (mode === 'block') {
-        throw new Error(`PII detected: ${rule.entityType}`);
+        throw new GuardrailViolationError(`PII detected: ${rule.entityType}`, {
+          entityType: rule.entityType,
+        });
       }
       if (mode === 'hash') {
         return hashWithPepper(rule.entityType, match);

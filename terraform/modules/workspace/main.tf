@@ -25,16 +25,21 @@ locals {
       log_retention_days        = 30
       purge_protection_enabled  = false
       immutable_blob_versioning = false
+      kv_network_bypass         = "AzureServices"
     }
     iso27001-aligned = {
       log_retention_days        = 90
       purge_protection_enabled  = true
       immutable_blob_versioning = true
+      kv_network_bypass         = "AzureServices"
     }
     hipaa-aware = {
       log_retention_days        = 365
       purge_protection_enabled  = true
       immutable_blob_versioning = true
+      # No AzureServices bypass under hipaa-aware — every caller must come
+      # in through an explicit private-endpoint or IP rule.
+      kv_network_bypass = "None"
     }
   }
 
@@ -42,6 +47,7 @@ locals {
 
   log_retention_days       = coalesce(var.log_retention_days, local.preset.log_retention_days)
   purge_protection_enabled = coalesce(var.purge_protection_enabled, local.preset.purge_protection_enabled)
+  kv_network_bypass        = local.preset.kv_network_bypass
 
   required_tags = {
     workspace      = var.workspace_name
@@ -77,7 +83,7 @@ resource "azurerm_key_vault" "this" {
   public_network_access_enabled = false
   network_acls {
     default_action = "Deny"
-    bypass         = "AzureServices"
+    bypass         = local.kv_network_bypass
   }
   tags = local.tags
 }

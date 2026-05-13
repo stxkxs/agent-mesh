@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 
+import { ConfigurationError } from '@agent-mesh/core/errors';
 import { DefaultAzureCredential } from '@azure/identity';
 import { BlobServiceClient } from '@azure/storage-blob';
 
@@ -55,13 +56,19 @@ export interface SuiteReport {
   readonly cases: readonly CaseResult[];
 }
 
-const withTimeout = async <T>(p: Promise<T>, ms: number, label: string): Promise<T> =>
-  Promise.race([
-    p,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms),
-    ),
-  ]);
+const withTimeout = async <T>(p: Promise<T>, ms: number, label: string): Promise<T> => {
+  let handle: NodeJS.Timeout | undefined;
+  const timer = new Promise<never>((_, reject) => {
+    handle = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+  });
+  try {
+    return await Promise.race([p, timer]);
+  } finally {
+    // Clear the timer either way — without this, the Node event loop
+    // can stay alive for `ms` after the suite finishes, blocking exit.
+    if (handle !== undefined) clearTimeout(handle);
+  }
+};
 
 /**
  * Run an eval suite end-to-end:
@@ -137,18 +144,20 @@ export const runSuite = async <I, O, C extends EvalCase>(
 
   // Blob upload
   if (opts.resultsContainerUrl !== undefined) {
-    const cred = new DefaultAzureCredential();
-    // Container URL → split into account + container
     const m = opts.resultsContainerUrl.match(/^(https:\/\/[^/]+)\/([^/?]+)/);
-    if (m !== null && m[1] !== undefined && m[2] !== undefined) {
-      const service = new BlobServiceClient(m[1], cred);
-      const container = service.getContainerClient(m[2]);
-      const blob = container.getBlockBlobClient(`runs/${opts.suiteName}/${runId}.json`);
-      const body = JSON.stringify(report, null, 2);
-      await blob.upload(body, body.length, {
-        blobHTTPHeaders: { blobContentType: 'application/json' },
-      });
+    if (m === null || m[1] === undefined || m[2] === undefined) {
+      throw new ConfigurationError(
+        `resultsContainerUrl does not match expected shape https://<account>.blob.core.windows.net/<container>: ${opts.resultsContainerUrl}`,
+      );
     }
+    const cred = new DefaultAzureCredential();
+    const service = new BlobServiceClient(m[1], cred);
+    const container = service.getContainerClient(m[2]);
+    const blob = container.getBlockBlobClient(`runs/${opts.suiteName}/${runId}.json`);
+    const body = JSON.stringify(report, null, 2);
+    await blob.upload(body, body.length, {
+      blobHTTPHeaders: { blobContentType: 'application/json' },
+    });
   }
 
   return report;

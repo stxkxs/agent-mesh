@@ -1,21 +1,8 @@
-import { createHash } from 'node:crypto';
-
 import { describe, expect, it } from 'vitest';
 
-// Re-implementation of dispatchBatch's stable stringify, exposed for testing.
-const sha256Json = (value: unknown): string => {
-  const stringify = (v: unknown): string => {
-    if (v === null || typeof v !== 'object') return JSON.stringify(v);
-    if (Array.isArray(v)) return `[${v.map((x) => stringify(x)).join(',')}]`;
-    const entries = Object.entries(v as Record<string, unknown>).sort(([a], [b]) =>
-      a.localeCompare(b),
-    );
-    return `{${entries.map(([k, val]) => `${JSON.stringify(k)}:${stringify(val)}`).join(',')}}`;
-  };
-  return createHash('sha256').update(stringify(value)).digest('hex');
-};
+import { sha256Json } from '../index.js';
 
-describe('stable JSON sha256 (dispatchBatch idempotency hash)', () => {
+describe('sha256Json (stable JSON hash, imported from production code)', () => {
   it('produces the same hash regardless of key order', () => {
     const a = sha256Json({ priority: 'high', topic: 'outage' });
     const b = sha256Json({ topic: 'outage', priority: 'high' });

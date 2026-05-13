@@ -43,8 +43,14 @@ export interface BatchDispatchResult {
   readonly correlationIds: readonly string[];
 }
 
-const sha256Json = (value: unknown): string => {
-  // Stable stringify — sorted keys so reorders don't change the hash.
+/**
+ * Stable JSON SHA-256: serializes objects with sorted keys so that key
+ * reordering doesn't change the hash. Array order is preserved (intentional
+ * — `[a, b]` and `[b, a]` are different inputs). Exported so the
+ * idempotency hash function is testable against real production code, not
+ * a re-implementation.
+ */
+export const sha256Json = (value: unknown): string => {
   const stringify = (v: unknown): string => {
     if (v === null || typeof v !== 'object') return JSON.stringify(v);
     if (Array.isArray(v)) return `[${v.map((x) => stringify(x)).join(',')}]`;
@@ -90,15 +96,26 @@ export const dispatchBatch = async (
 
       const correlationId = randomUUID();
       const expireAtSeconds = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
-      await container.items.create({
-        id: docId,
-        [partition]: opts.agentId,
-        idempotency_key: idempotencyKey,
-        correlation_id: correlationId,
-        status: 'queued',
-        created_at: new Date().toISOString(),
-        ttl: expireAtSeconds, // Cosmos respects ttl as seconds-from-now
-      });
+      try {
+        await container.items.create({
+          id: docId,
+          [partition]: opts.agentId,
+          idempotency_key: idempotencyKey,
+          correlation_id: correlationId,
+          status: 'queued',
+          created_at: new Date().toISOString(),
+          ttl: expireAtSeconds, // Cosmos respects ttl as seconds-from-now
+        });
+      } catch (e: unknown) {
+        // 409 Conflict — another writer beat us to it (the read-then-create
+        // window allows two concurrent dispatches to both miss on read).
+        // Treat as skipped, don't abort the batch.
+        if ((e as { code?: number }).code === 409) {
+          skipped += 1;
+          continue;
+        }
+        throw e;
+      }
 
       const message: ServiceBusMessage = {
         body: input,

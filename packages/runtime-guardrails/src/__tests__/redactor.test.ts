@@ -50,4 +50,29 @@ describe('redact', () => {
     const found = r.detections.find((d) => d.entityType === 'EMAIL');
     expect(found?.count).toBe(2);
   });
+
+  it('credit-card regex Luhn-validates — redacts valid CC, skips lookalike non-Luhn digits', () => {
+    // Visa test number 4111 1111 1111 1111 passes Luhn.
+    const validCC = redact('card 4111 1111 1111 1111 here');
+    expect(validCC.text).toContain('[REDACTED:CREDIT_CARD]');
+
+    // 16 digits that fail Luhn — e.g. an order/tracking-style number.
+    // 1234567812345678: Luhn computes to 4, not 0. Should NOT be redacted.
+    const fakeCC = redact('order 1234567812345678 placed');
+    expect(fakeCC.text).toContain('1234567812345678');
+    expect(fakeCC.detections.find((d) => d.entityType === 'CREDIT_CARD')).toBeUndefined();
+  });
+
+  it('block mode throws GuardrailViolationError with entityType in details', () => {
+    let caught: unknown;
+    try {
+      redact('SSN 123-45-6789', undefined, 'block');
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toMatchObject({
+      code: 'guardrail_violation',
+      details: { entityType: 'US_SSN' },
+    });
+  });
 });

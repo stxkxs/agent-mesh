@@ -43,4 +43,4 @@ module "workspace" {
 ## ADRs
 
 - [ADR-0001 — Terraform over Bicep](../../../docs/adr/0001-terraform-over-bicep.md)
-- [ADR-0003 — Two CMKs per workspace (data + logs)](../../../docs/adr/0003-two-cmks-per-workspace.md)
+- [ADR-0013 — Two CMKs per workspace (data + logs)](../../../docs/adr/0013-two-cmks-per-workspace.md)

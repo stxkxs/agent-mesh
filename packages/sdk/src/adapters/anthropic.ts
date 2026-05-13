@@ -1,8 +1,7 @@
-import { ProviderError, RateLimitedError } from '@agent-mesh/core/errors';
 import { computeCostUsd } from '@agent-mesh/pricing';
 import Anthropic from '@anthropic-ai/sdk';
 
-import { emitCallEvent } from '../telemetry.js';
+import { withTelemetry } from '../telemetry.js';
 
 import type {
   ContentBlock,
@@ -78,110 +77,61 @@ export class AnthropicAdapter implements ProviderAdapter {
 
   public async messages(params: MessagesParams): Promise<MessagesResponse> {
     const anthropic = await this.clientPromise;
-    const requestId = `req-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
-    const startedAt = new Date();
-    const startNs = process.hrtime.bigint();
 
-    try {
-      const raw = await anthropic.messages.create({
-        model: params.model,
-        max_tokens: params.max_tokens,
-        ...(params.system === undefined ? {} : { system: params.system }),
-        messages: params.messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-        ...(params.tools === undefined || params.tools.length === 0 ? {} : { tools: params.tools }),
-        ...(params.tool_choice === undefined ? {} : { tool_choice: params.tool_choice }),
-        ...(params.temperature === undefined ? {} : { temperature: params.temperature }),
-        ...(params.stop_sequences === undefined
-          ? {}
-          : { stop_sequences: [...params.stop_sequences] }),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
-      const durationMs = Number(process.hrtime.bigint() - startNs) / 1_000_000;
-      const usage = raw.usage as {
-        input_tokens: number;
-        output_tokens: number;
-        cache_creation_input_tokens?: number;
-        cache_read_input_tokens?: number;
-      };
-      const tokens: TokenUsage = {
-        inputTokens: usage.input_tokens,
-        outputTokens: usage.output_tokens,
-        cacheCreationInputTokens: usage.cache_creation_input_tokens ?? 0,
-        cacheReadInputTokens: usage.cache_read_input_tokens ?? 0,
-      };
-      const costUsd = this.estimateCost(params.model, tokens);
-
-      emitCallEvent({
+    return withTelemetry(
+      {
+        provider: 'anthropic',
         workspace: this.workspace,
         project: this.project,
         tenant: this.tenant,
-        ...(params.agent === undefined ? {} : { agent: params.agent }),
-        provider: 'anthropic',
+        classifyError: (e) => this.classifyError(e),
         model: params.model,
-        operation: params.operation ?? 'messages',
-        startedAt: startedAt.toISOString(),
-        durationMs: Math.round(durationMs),
-        tokens,
-        costUsd,
-        status: 'ok',
-        correlationId: params.correlationId,
-        requestId,
-        cacheHit: tokens.cacheReadInputTokens > 0,
-        extensions: {},
-      });
+      },
+      params,
+      async () => {
+        const raw = await anthropic.messages.create({
+          model: params.model,
+          max_tokens: params.max_tokens,
+          ...(params.system === undefined ? {} : { system: params.system }),
+          messages: params.messages.map((m) => ({ role: m.role, content: m.content })),
+          ...(params.tools === undefined || params.tools.length === 0
+            ? {}
+            : { tools: params.tools }),
+          ...(params.tool_choice === undefined ? {} : { tool_choice: params.tool_choice }),
+          ...(params.temperature === undefined ? {} : { temperature: params.temperature }),
+          ...(params.stop_sequences === undefined
+            ? {}
+            : { stop_sequences: [...params.stop_sequences] }),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
+        const usage = raw.usage as {
+          input_tokens: number;
+          output_tokens: number;
+          cache_creation_input_tokens?: number;
+          cache_read_input_tokens?: number;
+        };
+        const tokens: TokenUsage = {
+          inputTokens: usage.input_tokens,
+          outputTokens: usage.output_tokens,
+          cacheCreationInputTokens: usage.cache_creation_input_tokens ?? 0,
+          cacheReadInputTokens: usage.cache_read_input_tokens ?? 0,
+        };
+        const costUsd = this.estimateCost(params.model, tokens);
 
-      return {
-        id: raw.id,
-        provider: 'anthropic',
-        model: params.model,
-        content: raw.content as unknown as readonly ContentBlock[],
-        stopReason: this.mapStopReason(raw.stop_reason),
-        usage: tokens,
-        costUsd,
-        durationMs: Math.round(durationMs),
-        cacheHit: tokens.cacheReadInputTokens > 0,
-      };
-    } catch (e: unknown) {
-      const durationMs = Number(process.hrtime.bigint() - startNs) / 1_000_000;
-      const errorClass = this.classifyError(e);
-      emitCallEvent({
-        workspace: this.workspace,
-        project: this.project,
-        tenant: this.tenant,
-        ...(params.agent === undefined ? {} : { agent: params.agent }),
-        provider: 'anthropic',
-        model: params.model,
-        operation: params.operation ?? 'messages',
-        startedAt: startedAt.toISOString(),
-        durationMs: Math.round(durationMs),
-        tokens: {
-          inputTokens: 0,
-          outputTokens: 0,
-          cacheCreationInputTokens: 0,
-          cacheReadInputTokens: 0,
-        },
-        costUsd: 0,
-        status: errorClass === 'RateLimit' || errorClass === 'Overloaded' ? 'throttled' : 'error',
-        errorClass,
-        correlationId: params.correlationId,
-        requestId,
-        cacheHit: false,
-        extensions: { errorMessage: e instanceof Error ? e.message : String(e) },
-      });
-      if (errorClass === 'RateLimit' || errorClass === 'Overloaded') {
-        throw new RateLimitedError(
-          `Anthropic ${errorClass}: ${e instanceof Error ? e.message : String(e)}`,
-          { provider: 'anthropic', model: params.model, errorClass },
-        );
-      }
-      throw new ProviderError(
-        `Anthropic ${errorClass}: ${e instanceof Error ? e.message : String(e)}`,
-        { provider: 'anthropic', model: params.model, errorClass },
-      );
-    }
+        return {
+          id: raw.id,
+          provider: 'anthropic',
+          model: params.model,
+          content: raw.content as unknown as readonly ContentBlock[],
+          stopReason: this.mapStopReason(raw.stop_reason),
+          usage: tokens,
+          costUsd,
+          durationMs: 0, // overwritten by withTelemetry
+          cacheHit: tokens.cacheReadInputTokens > 0,
+          rawTokens: tokens,
+        };
+      },
+    );
   }
 
   private mapStopReason(reason: string | null | undefined): StopReason {

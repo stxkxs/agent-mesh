@@ -123,4 +123,45 @@ describe('AzureOpenAIAdapter', () => {
       input: { email: '[email protected]' },
     });
   });
+
+  it.each([
+    [{ type: 'auto' as const }, 'auto'],
+    [{ type: 'any' as const }, 'required'],
+    [
+      { type: 'tool' as const, name: 'fetchCrmContact' },
+      { type: 'function', function: { name: 'fetchCrmContact' } },
+    ],
+  ])('translates tool_choice %j into %j', async (input, expected) => {
+    const create = vi.fn().mockResolvedValue({
+      id: 'chatcmpl-tc',
+      choices: [{ message: { content: 'ok' }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 1, completion_tokens: 1 },
+    });
+    const adapter = buildAdapter(create);
+
+    await adapter.messages({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: 'hi' }],
+      max_tokens: 64,
+      correlationId: 'corr-tc',
+      tool_choice: input,
+    });
+
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ tool_choice: expected }));
+  });
+
+  it('throws when tool_choice type=tool has no name', async () => {
+    const create = vi.fn();
+    const adapter = buildAdapter(create);
+
+    await expect(
+      adapter.messages({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: 'hi' }],
+        max_tokens: 64,
+        correlationId: 'corr-tc-bad',
+        tool_choice: { type: 'tool' },
+      }),
+    ).rejects.toMatchObject({ code: 'provider' });
+  });
 });
