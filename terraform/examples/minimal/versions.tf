@@ -13,6 +13,14 @@ terraform {
       source  = "azure/azapi"
       version = "~> 2.9"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
+    datadog = {
+      source  = "DataDog/datadog"
+      version = "~> 4.0"
+    }
   }
 }
 
@@ -26,5 +34,10 @@ provider "azurerm" {
 }
 
 provider "azuread" {}
-
 provider "azapi" {}
+
+# Datadog provider — keys via DD_API_KEY + DD_APP_KEY env vars. Only used
+# when var.deploy_observability = true.
+provider "datadog" {
+  validate = false
+}
