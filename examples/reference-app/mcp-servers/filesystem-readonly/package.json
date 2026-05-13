@@ -1,0 +1,17 @@
+{
+  "name": "mcp-filesystem-readonly",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Sample MCP server — exposes read-only file listing + content via HTTP, sandboxed to MCP_ROOT.",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "typescript": "^6.0.3"
+  }
+}

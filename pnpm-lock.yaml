@@ -63,6 +63,46 @@ importers:
         specifier: ^4.1.6
         version: 4.1.6(@opentelemetry/api@1.9.1)(@types/node@25.7.0)(@vitest/coverage-v8@4.1.6)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.0))
 
+  examples/reference-app:
+    dependencies:
+      '@agent-mesh/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@agent-mesh/runtime-agent':
+        specifier: workspace:*
+        version: link:../../packages/runtime-agent
+      '@agent-mesh/runtime-evals':
+        specifier: workspace:*
+        version: link:../../packages/runtime-evals
+      '@agent-mesh/runtime-guardrails':
+        specifier: workspace:*
+        version: link:../../packages/runtime-guardrails
+      '@agent-mesh/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@azure/identity':
+        specifier: ^4.13.1
+        version: 4.13.1
+      '@azure/keyvault-secrets':
+        specifier: ^4.11.2
+        version: 4.11.2
+      '@azure/storage-blob':
+        specifier: ^12.31.0
+        version: 12.31.0
+      typescript:
+        specifier: ^6.0.0
+        version: 6.0.3
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@agent-mesh/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@types/node':
+        specifier: ^25.7.0
+        version: 25.7.0
+
   packages/cli:
     dependencies:
       '@agent-mesh/core':
@@ -400,6 +440,10 @@ packages:
   '@azure/keyvault-keys@4.10.0':
     resolution: {integrity: sha512-eDT7iXoBTRZ2n3fLiftuGJFD+yjkiB1GNqzU2KbY1TLYeXeSPVTVgn2eJ5vmRTZ11978jy2Kg2wI7xa9Tyr8ag==}
     engines: {node: '>=18.0.0'}
+
+  '@azure/keyvault-secrets@4.11.2':
+    resolution: {integrity: sha512-ECj/kwZbZlQXj2kfWivSICbKwj6W3chmFhv8qUdauqYnjvZ0hWZBFSsZWux7W2nX3MP49PLUCusXk+hAg3pipg==}
+    engines: {node: '>=20.0.0'}
 
   '@azure/logger@1.3.0':
     resolution: {integrity: sha512-fCqPIfOcLE+CGqGPd66c8bZpwAji98tZ4JI9i/mlTNTlsIWslCfpg48s/ypyLxZTump5sypjrKn2/kY7q8oAbA==}
@@ -3044,6 +3088,22 @@ snapshots:
       tslib: 2.8.1
     transitivePeerDependencies:
       - '@azure/core-client'
+      - supports-color
+
+  '@azure/keyvault-secrets@4.11.2':
+    dependencies:
+      '@azure-rest/core-client': 2.6.0
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.10.1
+      '@azure/core-lro': 2.7.2
+      '@azure/core-paging': 1.6.2
+      '@azure/core-rest-pipeline': 1.23.0
+      '@azure/core-tracing': 1.3.1
+      '@azure/core-util': 1.13.1
+      '@azure/keyvault-common': 2.1.0
+      '@azure/logger': 1.3.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
       - supports-color
 
   '@azure/logger@1.3.0':

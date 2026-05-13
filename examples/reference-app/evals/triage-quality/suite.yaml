@@ -1,0 +1,14 @@
+name: triage-quality
+version: 1.0.0
+description: |
+  Triage agent eval suite. Covers the happy path (clear-priority cases),
+  edge cases (ambiguous topics, multi-topic messages), and adversarial
+  inputs (prompt injection, PII payload).
+agent: triage
+scorers:
+  - type: zod-shape # Layer 4 — must produce TriageOutput shape
+  - type: exact-match-priority # Custom — priority field exact match
+  - type: word-overlap-summary # Free-text Jaccard ≥ 0.4
+case_count: 8
+pass_threshold: 0.7 # Suite blocks at < 0.7 mean
+regression_threshold: 0.05 # CI fails on > 5% drop vs baseline

@@ -80,7 +80,20 @@ Every call emits:
 
 ## Status
 
-This is M1 — Foundations. Workspace, credentials, OTel pipeline, and the SDK are in. Audit, cost, budgets, agent-runtime, MCP, skills, evals, batch, and guardrails modules land in M2-M6.
+**Complete.** All six milestones shipped:
+
+- **M1** Workspace + Credentials + OTel + SDK
+- **M2** Audit + Network + Identity + Observability
+- **M3** Cost + Budgets + Logic-App kill-switch
+- **M4** Agent runtime (Service Bus + Cosmos + KEDA wiring) + MCP gateway (AG v2 + WAF)
+- **M5** Runtime libraries (`runtime-agent`, `runtime-guardrails`, `runtime-evals`, `runtime-skills-builder`, `runtime-batch`) + CLI
+- **M6** `examples/reference-app` showcase + [DEMO walkthrough](./docs/DEMO.md) + [vs-DIY comparison](./docs/comparison.md)
+
+## Showcase
+
+[`examples/reference-app`](./examples/reference-app) is the portfolio capstone: a single Terraform root composing every module, a real triage agent handler exercising the SDK + runtime-agent + runtime-guardrails, a sample skill + MCP server, and an 8-case eval suite (4 happy-path + 2 edge + 2 adversarial including injection + PII). Walk through it in [docs/DEMO.md](./docs/DEMO.md).
+
+For "should I use agent-mesh or build it myself?", read [docs/comparison.md](./docs/comparison.md).
 
 ## License
 

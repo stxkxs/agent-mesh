@@ -1,0 +1,15 @@
+{
+  "id": "case-006-vague",
+  "category": "edge",
+  "input": {
+    "correlationId": "eval-006-vague",
+    "sender": { "email": "anon-relay" },
+    "body": "Things are slow."
+  },
+  "expected": {
+    "priority": "low",
+    "topic": "other",
+    "owner": "support"
+  },
+  "expectedText": "vague performance complaint needs follow-up"
+}

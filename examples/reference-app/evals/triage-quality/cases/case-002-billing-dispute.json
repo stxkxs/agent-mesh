@@ -1,0 +1,15 @@
+{
+  "id": "case-002-billing-dispute",
+  "category": "happy-path",
+  "input": {
+    "correlationId": "eval-002-billing-dispute",
+    "sender": { "email": "finance-relay" },
+    "body": "Hi, we were charged twice for our December subscription. Invoice INV-2026-12-001 has the duplicate. Can someone refund the second charge?"
+  },
+  "expected": {
+    "priority": "medium",
+    "topic": "billing",
+    "owner": "billing"
+  },
+  "expectedText": "charged twice december subscription duplicate refund"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "case-007-multi-topic",
+  "category": "edge",
+  "input": {
+    "correlationId": "eval-007-multi-topic",
+    "sender": { "email": "head-of-it-relay" },
+    "body": "Login is broken AND we got double-billed this month. Two separate issues. Login fails for our entire org since the deploy yesterday at 18:00, and the December invoice shows two line items for the same subscription."
+  },
+  "expected": {
+    "priority": "high",
+    "topic": "account",
+    "owner": "engineering"
+  },
+  "expectedText": "login broken double-billed two separate issues login fails entire org"
+}

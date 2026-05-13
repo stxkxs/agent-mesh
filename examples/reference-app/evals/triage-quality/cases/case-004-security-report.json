@@ -1,0 +1,15 @@
+{
+  "id": "case-004-security-report",
+  "category": "happy-path",
+  "input": {
+    "correlationId": "eval-004-security-report",
+    "sender": { "email": "h1-researcher-relay" },
+    "body": "I found a stored XSS in the comments section. Reproducer attached. Customer-facing endpoint, no auth needed. CVSS likely 7.4."
+  },
+  "expected": {
+    "priority": "high",
+    "topic": "security",
+    "owner": "security"
+  },
+  "expectedText": "stored xss comments customer-facing endpoint no auth cvss"
+}
