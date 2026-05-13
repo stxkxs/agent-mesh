@@ -27,7 +27,7 @@ variable "data_residency" {
   description = "Required, no default. Where the model traffic terminates. Surfaced on every deploy as the `data_residency_notice` output."
   type        = string
   validation {
-    condition = can(regex("^(aws|azure)-[a-z0-9-]+$", var.data_residency)) || contains(["us-anthropic", "unknown"], var.data_residency)
+    condition     = can(regex("^(aws|azure)-[a-z0-9-]+$", var.data_residency)) || contains(["us-anthropic", "unknown"], var.data_residency)
     error_message = "data_residency must match `aws-<region>` / `azure-<region>` / `us-anthropic` / `unknown`."
   }
 }
@@ -43,7 +43,7 @@ variable "log_retention_days" {
   type        = number
   default     = null
   validation {
-    condition     = var.log_retention_days == null || (var.log_retention_days >= 30 && var.log_retention_days <= 730)
+    condition     = var.log_retention_days == null ? true : var.log_retention_days >= 30 && var.log_retention_days <= 730
     error_message = "log_retention_days must be between 30 and 730."
   }
 }

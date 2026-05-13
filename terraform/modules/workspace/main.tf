@@ -22,18 +22,18 @@ data "azurerm_client_config" "current" {}
 locals {
   preset_defaults = {
     standard = {
-      log_retention_days       = 30
-      purge_protection_enabled = false
+      log_retention_days        = 30
+      purge_protection_enabled  = false
       immutable_blob_versioning = false
     }
     iso27001-aligned = {
-      log_retention_days       = 90
-      purge_protection_enabled = true
+      log_retention_days        = 90
+      purge_protection_enabled  = true
       immutable_blob_versioning = true
     }
     hipaa-aware = {
-      log_retention_days       = 365
-      purge_protection_enabled = true
+      log_retention_days        = 365
+      purge_protection_enabled  = true
       immutable_blob_versioning = true
     }
   }
@@ -71,7 +71,7 @@ resource "azurerm_key_vault" "this" {
   resource_group_name           = azurerm_resource_group.this.name
   tenant_id                     = data.azurerm_client_config.current.tenant_id
   sku_name                      = "premium"
-  enable_rbac_authorization     = true
+  rbac_authorization_enabled    = true
   purge_protection_enabled      = local.purge_protection_enabled
   soft_delete_retention_days    = 90
   public_network_access_enabled = false
@@ -169,7 +169,7 @@ resource "azurerm_storage_account" "this" {
   }
 
   blob_properties {
-    versioning_enabled = local.preset.immutable_blob_versioning
+    versioning_enabled  = local.preset.immutable_blob_versioning
     change_feed_enabled = local.preset.immutable_blob_versioning
     delete_retention_policy {
       days = 30

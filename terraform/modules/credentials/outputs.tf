@@ -36,8 +36,8 @@ output "azure_openai_secret_name" {
 output "service_account_annotations" {
   description = "Suggested ServiceAccount + Pod annotations to enable Workload Identity. Copy into your Helm values or Kubernetes manifest."
   value = {
-    "azure.workload.identity/client-id"   = azuread_application.this.client_id
-    "azure.workload.identity/tenant-id"   = data.azurerm_client_config.current.tenant_id
-    "azure.workload.identity/use"         = "true"
+    "azure.workload.identity/client-id" = azuread_application.this.client_id
+    "azure.workload.identity/tenant-id" = data.azurerm_client_config.current.tenant_id
+    "azure.workload.identity/use"       = "true"
   }
 }
