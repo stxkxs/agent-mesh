@@ -64,6 +64,46 @@ variable "datadog_notify_handles" {
   default     = []
 }
 
+variable "deploy_cost" {
+  description = "Whether to deploy Cost Management Export to ADLS + Synapse views + cost anomaly proxy."
+  type        = bool
+  default     = false
+}
+
+variable "deploy_budgets" {
+  description = "Whether to deploy the workspace budget + Action Group + kill-switch Logic App."
+  type        = bool
+  default     = false
+}
+
+variable "monthly_budget_usd" {
+  description = "Monthly budget in USD when deploy_budgets = true."
+  type        = number
+  default     = 500
+}
+
+variable "kill_switch_threshold_pct" {
+  description = "Threshold percentage that triggers the kill-switch automation."
+  type        = number
+  default     = 120
+}
+
+variable "budget_email_subscribers" {
+  description = "Email addresses notified at every budget threshold."
+  type        = list(string)
+  default     = []
+}
+
+variable "budget_webhook_endpoints" {
+  description = "HTTPS webhooks (Slack, PagerDuty) notified at every budget threshold."
+  type = list(object({
+    name                    = string
+    service_uri             = string
+    use_common_alert_schema = optional(bool, true)
+  }))
+  default = []
+}
+
 variable "tags" {
   description = "Additional tags."
   type        = map(string)

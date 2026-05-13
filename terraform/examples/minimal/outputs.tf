@@ -71,3 +71,28 @@ output "datadog_dashboard_url" {
   description = "Datadog dashboard URL, if `deploy_observability = true`."
   value       = var.deploy_observability ? module.observability[0].dashboard_url : null
 }
+
+output "budget_action_group_id" {
+  description = "Action Group ID for the workspace budget — drives every notification."
+  value       = var.deploy_budgets ? module.budgets[0].action_group_id : null
+}
+
+output "kill_switch_logic_app_id" {
+  description = "Kill-switch Logic App resource ID."
+  value       = var.deploy_budgets ? module.budgets[0].kill_switch_logic_app_id : null
+}
+
+output "kill_switch_post_apply_steps" {
+  description = "Steps to grant the Logic App's managed identity Microsoft Graph permissions to delete federated credentials. **Operator must run these once** before the kill-switch can fire."
+  value       = var.deploy_budgets ? module.budgets[0].kill_switch_post_apply_steps : null
+}
+
+output "cost_export_container_url" {
+  description = "ADLS container URL receiving daily Cost Management Export parquet files."
+  value       = var.deploy_cost ? module.cost[0].cost_exports_container_url : null
+}
+
+output "cost_view_definitions" {
+  description = "Synapse SQL — paste into the audit module's SQL endpoint to create cost views over the export."
+  value       = var.deploy_cost ? module.cost[0].cost_view_definitions : null
+}

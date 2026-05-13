@@ -95,3 +95,36 @@ module "observability" {
   workspace_name = module.workspace.workspace_name
   notify_handles = var.datadog_notify_handles
 }
+
+module "budgets" {
+  count  = var.deploy_budgets ? 1 : 0
+  source = "../../modules/budgets"
+
+  workspace_name      = module.workspace.workspace_name
+  resource_group_id   = module.workspace.resource_group_id
+  resource_group_name = module.workspace.resource_group_name
+  location            = module.workspace.location
+  tags                = module.workspace.tags
+
+  monthly_budget_usd        = var.monthly_budget_usd
+  kill_switch_threshold_pct = var.kill_switch_threshold_pct
+  email_subscribers         = var.budget_email_subscribers
+  webhook_endpoints         = var.budget_webhook_endpoints
+
+  kill_switch_target_app_id = module.credentials.application_object_id
+  deploy_kill_switch        = true
+}
+
+module "cost" {
+  count  = var.deploy_cost ? 1 : 0
+  source = "../../modules/cost"
+
+  workspace_name       = module.workspace.workspace_name
+  resource_group_id    = module.workspace.resource_group_id
+  storage_account_id   = module.workspace.storage_account_id
+  storage_account_name = module.workspace.storage_account_name
+
+  enable_anomaly_alert    = var.deploy_budgets
+  anomaly_action_group_id = var.deploy_budgets ? module.budgets[0].action_group_id : null
+  enable_synapse_views    = var.deploy_audit
+}

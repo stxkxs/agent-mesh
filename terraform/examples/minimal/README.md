@@ -12,14 +12,16 @@ Composes every agent-mesh module via opt-in flags. The smallest deployment is wo
 - (optional) Workload Identity federated credential wiring AKS OIDC → AAD app
 - Placeholder Key Vault secrets for both provider API keys (real values set out-of-band)
 
-## Opt-in M2 modules
+## Opt-in modules
 
-| Flag                          | What it adds                                                                                                                                                                                                                        |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `deploy_audit = true`         | Event Hubs namespace + audit hub + Capture to ADLS partitioned by `yyyy/mm/dd/hh` + Synapse Serverless workspace + Auditor-readable SQL endpoint                                                                                    |
-| `deploy_network = true`       | VNet 10.40.0.0/16 + 5 subnets (aks_system, aks_user, mcp, endpoints, appgateway) + NSG baseline + Private Endpoints for KV/Storage/EventHubs + Azure Firewall (only for iso27001-aligned / hipaa-aware)                             |
-| `deploy_identity = true`      | Six AAD groups (PlatformAdmin / WorkspaceAdmin / Developer / Auditor / FinOps / ReadOnly) + scoped RBAC role assignments. Auditor decrypts logs CMK only.                                                                           |
-| `deploy_observability = true` | 1 Datadog dashboard (5 rows: Volume/Performance/Errors/Cost/Compliance) + 9 monitors (p99 latency per model, error rate, cache-hit drop, eval regression, audit lag, spend anomaly). Requires `DD_API_KEY` + `DD_APP_KEY` env vars. |
+| Flag                               | What it adds                                                                                                                                                                                                                      |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `deploy_audit = true` (M2)         | Event Hubs + audit hub + Capture to ADLS partitioned by `yyyy/mm/dd/hh` + Synapse Serverless + Auditor-readable SQL endpoint                                                                                                      |
+| `deploy_network = true` (M2)       | VNet 10.40.0.0/16 + 5 subnets + NSG baseline + Private Endpoints for KV/Storage/EventHubs + optional Azure Firewall                                                                                                               |
+| `deploy_identity = true` (M2)      | Six AAD groups (PlatformAdmin/WorkspaceAdmin/Developer/Auditor/FinOps/ReadOnly) + scoped RBAC. Auditor decrypts logs CMK only.                                                                                                    |
+| `deploy_observability = true` (M2) | Datadog dashboard (5 rows) + 9 monitors (p99 per model, error rate, cache-hit drop, eval regression, audit lag, spend anomaly). Requires `DD_API_KEY` + `DD_APP_KEY`.                                                             |
+| `deploy_budgets = true` (M3)       | Azure Consumption Budget scoped to the workspace RG with 50/80/100% actual + 80% forecast notifications + Logic App kill-switch on hard breach. Set `monthly_budget_usd`, `budget_email_subscribers`, `budget_webhook_endpoints`. |
+| `deploy_cost = true` (M3)          | Cost Management Export to ADLS daily + cost reconciliation Synapse views (EMF-vs-CUR) + Cost Anomaly Detection routed through the budgets action group.                                                                           |
 
 ## Quick start
 
@@ -47,12 +49,13 @@ az keyvault secret set --vault-name "$VAULT_NAME" --name azure-openai-key-alpha 
 
 ## Recommended combinations
 
-| Profile              | Flags                                                 |
-| -------------------- | ----------------------------------------------------- |
-| **Smoke test**       | (none — M1 only)                                      |
-| **Audit + RBAC**     | `deploy_audit=true deploy_identity=true`              |
-| **Full M2**          | All four flags                                        |
-| **Production-equiv** | All four flags + `compliance_preset=iso27001-aligned` |
+| Profile                       | Flags                                                                                  |
+| ----------------------------- | -------------------------------------------------------------------------------------- |
+| **Smoke test**                | (none — M1 only)                                                                       |
+| **Audit + RBAC**              | `deploy_audit=true deploy_identity=true`                                               |
+| **Full M2**                   | `deploy_audit=true deploy_network=true deploy_identity=true deploy_observability=true` |
+| **Full M2 + cost governance** | All M2 + `deploy_budgets=true monthly_budget_usd=5000 deploy_cost=true`                |
+| **Production-equiv**          | All flags + `compliance_preset=iso27001-aligned`                                       |
 
 ## Datadog observability
 
