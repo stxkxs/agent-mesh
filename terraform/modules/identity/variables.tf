@@ -8,11 +8,6 @@ variable "resource_group_id" {
   type        = string
 }
 
-variable "subscription_id" {
-  description = "Subscription ID where the workspace lives. Used as the custom role scope ceiling."
-  type        = string
-}
-
 variable "key_vault_id" {
   description = "Key Vault ID — Auditor gets `Key Vault Crypto Service Encryption User` on the logs CMK only (encryption-context restricted via role conditions)."
   type        = string
@@ -52,8 +47,3 @@ variable "owners" {
   default     = []
 }
 
-variable "tags" {
-  description = "Tags from the `workspace` module — applied to role assignments where supported."
-  type        = map(string)
-  default     = {}
-}

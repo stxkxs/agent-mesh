@@ -172,23 +172,13 @@ resource "azurerm_subnet_network_security_group_association" "endpoints" {
 }
 
 # ─── Private Endpoints ──────────────────────────────────────────────────────
-
-# Resolves the subresource name + DNS zone for a given Azure service.
-locals {
-  # Map subresource → privatelink DNS zone the customer should pair with the PE.
-  # Callers pre-create the DNS zones in their hub VNet (typical pattern) or
-  # set `private_dns_zone_id` per-PE if they manage zones here.
-  private_dns_zones_per_subresource = {
-    vault            = "privatelink.vaultcore.azure.net"
-    blob             = "privatelink.blob.core.windows.net"
-    dfs              = "privatelink.dfs.core.windows.net"
-    namespace        = "privatelink.servicebus.windows.net"
-    SQL              = "privatelink.documents.azure.com"
-    "Sql"            = "privatelink.sql.azuresynapse.net"
-    sqlOnDemand      = "privatelink.sql.azuresynapse.net"
-    sqlServerlessSQL = "privatelink.sql.azuresynapse.net"
-  }
-}
+#
+# DNS resolution is the operator's responsibility. The typical pattern is
+# a hub-spoke topology with one Private DNS Zone per Azure service in the
+# hub VNet (`privatelink.vaultcore.azure.net`, `privatelink.blob.core.
+# windows.net`, `privatelink.servicebus.windows.net`, etc.) and zone
+# links into the spoke. We don't manage zones here because the pattern
+# varies wildly per org.
 
 resource "azurerm_private_endpoint" "this" {
   for_each            = var.private_endpoint_targets

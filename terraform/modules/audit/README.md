@@ -13,7 +13,6 @@ module "audit" {
   location             = module.workspace.location
   storage_account_id   = module.workspace.storage_account_id
   storage_account_name = module.workspace.storage_account_name
-  logs_cmk_id          = module.workspace.cmk_logs_id
   compliance_preset    = module.workspace.compliance_preset
   tags                 = module.workspace.tags
 

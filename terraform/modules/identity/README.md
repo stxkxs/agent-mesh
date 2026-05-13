@@ -8,12 +8,10 @@ module "identity" {
 
   workspace_name      = module.workspace.workspace_name
   resource_group_id   = module.workspace.resource_group_id
-  subscription_id     = data.azurerm_client_config.current.subscription_id
   key_vault_id        = module.workspace.key_vault_id
   cmk_logs_id         = module.workspace.cmk_logs_id
   storage_account_id  = module.workspace.storage_account_id
   synapse_workspace_id = module.audit.synapse_workspace_id  # optional
-  tags                = module.workspace.tags
 }
 ```
 

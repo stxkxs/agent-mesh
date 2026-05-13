@@ -85,14 +85,6 @@ resource "azurerm_storage_container_immutability_policy" "audit" {
   protected_append_writes_all_enabled   = true
 }
 
-# Diagnostic Settings on the Event Hubs namespace — failure-mode telemetry
-# (capture errors, throttling) goes to the Log Analytics workspace.
-data "azurerm_log_analytics_workspace" "workspace_logs" {
-  count               = 0 # set by parent at compose time; not always supplied
-  name                = "log-agent-mesh-${var.workspace_name}"
-  resource_group_name = var.resource_group_name
-}
-
 # ─── Synapse Serverless — SQL over the captured Avro ─────────────────────────
 
 resource "azurerm_synapse_workspace" "this" {

@@ -45,11 +45,6 @@ variable "deploy_azure_firewall" {
   default     = false
 }
 
-variable "compliance_preset" {
-  description = "Echoed from the `workspace` module — drives NSG strictness + firewall defaults."
-  type        = string
-}
-
 variable "private_endpoint_targets" {
   description = "Map of {label = resource_id} for Azure resources that should receive a Private Endpoint in this VNet. The audit + workspace modules feed these in."
   type        = map(string)

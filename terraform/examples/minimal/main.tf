@@ -12,8 +12,6 @@
  * happy-path is the M1 default (workspace + credentials only).
  */
 
-data "azurerm_client_config" "current" {}
-
 module "workspace" {
   source = "../../modules/workspace"
 
@@ -45,7 +43,6 @@ module "audit" {
   location             = module.workspace.location
   storage_account_id   = module.workspace.storage_account_id
   storage_account_name = module.workspace.storage_account_name
-  logs_cmk_id          = module.workspace.cmk_logs_id
   compliance_preset    = module.workspace.compliance_preset
   tags                 = module.workspace.tags
 }
@@ -57,7 +54,6 @@ module "network" {
   workspace_name      = module.workspace.workspace_name
   resource_group_name = module.workspace.resource_group_name
   location            = module.workspace.location
-  compliance_preset   = module.workspace.compliance_preset
   tags                = module.workspace.tags
 
   deploy_azure_firewall = var.compliance_preset != "standard"
@@ -86,12 +82,10 @@ module "identity" {
 
   workspace_name       = module.workspace.workspace_name
   resource_group_id    = module.workspace.resource_group_id
-  subscription_id      = data.azurerm_client_config.current.subscription_id
   key_vault_id         = module.workspace.key_vault_id
   cmk_logs_id          = module.workspace.cmk_logs_id
   storage_account_id   = module.workspace.storage_account_id
   synapse_workspace_id = var.deploy_audit ? module.audit[0].synapse_workspace_id : null
-  tags                 = module.workspace.tags
 }
 
 module "observability" {

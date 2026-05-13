@@ -23,11 +23,6 @@ variable "storage_account_name" {
   type        = string
 }
 
-variable "logs_cmk_id" {
-  description = "Logs CMK Key Vault Key ID from the `workspace` module — encrypts the audit container."
-  type        = string
-}
-
 variable "compliance_preset" {
   description = "Echoed from the `workspace` module. Drives Event Hubs SKU + retention + Object Lock defaults."
   type        = string
