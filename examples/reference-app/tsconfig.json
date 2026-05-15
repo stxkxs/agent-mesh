@@ -1,0 +1,12 @@
+{
+  "extends": "@agent-mesh/config/tsconfig/base",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "composite": false,
+    "noEmit": true,
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["agents/**/*.ts", "skills/**/*.ts", "evals/**/*.ts"],
+  "exclude": ["dist", "node_modules", "mcp-servers/**", "**/__tests__/**"]
+}

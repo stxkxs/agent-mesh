@@ -1,0 +1,55 @@
+{
+  "name": "@agent-mesh/pricing",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Per-model per-1k-token price tables for Azure OpenAI and Anthropic. Loaded by @agent-mesh/sdk for cost estimation.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stxkxs/agent-mesh.git",
+    "directory": "packages/pricing"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./azure-openai": {
+      "types": "./dist/azure-openai.d.ts",
+      "import": "./dist/azure-openai.js"
+    },
+    "./anthropic": {
+      "types": "./dist/anthropic.d.ts",
+      "import": "./dist/anthropic.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@agent-mesh/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@agent-mesh/config": "workspace:*",
+    "@types/node": "^25.7.0"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

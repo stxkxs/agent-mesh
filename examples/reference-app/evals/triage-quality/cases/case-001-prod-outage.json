@@ -1,0 +1,15 @@
+{
+  "id": "case-001-prod-outage",
+  "category": "happy-path",
+  "input": {
+    "correlationId": "eval-001-prod-outage",
+    "sender": { "email": "ops-team-relay" },
+    "body": "URGENT: Production checkout is returning 503 errors for 100% of requests since 14:32 UTC. Our customer-facing app is down. Need engineering response immediately."
+  },
+  "expected": {
+    "priority": "high",
+    "topic": "outage",
+    "owner": "engineering"
+  },
+  "expectedText": "production checkout returning 503 errors customer-facing app down need engineering"
+}

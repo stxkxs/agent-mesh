@@ -1,0 +1,94 @@
+## Agent runtime chart — drop a TypeScript agent onto AKS with KEDA scale + DLQ handling.
+##
+## Required values: `workspace`, `project`, `image`, `servicebus.namespace`,
+## `workloadIdentity.clientId`.
+
+# Identity context — propagated as env vars + log resource attributes.
+workspace: '' # e.g. "platform-prod"
+project: '' # e.g. "alpha"
+agentId: '' # e.g. "triage". Used as agent_id partition key in Cosmos.
+
+# Workload Identity. From terraform output service_account_annotations.
+workloadIdentity:
+  clientId: '' # AAD app client ID (azure.workload.identity/client-id)
+  tenantId: '' # AAD tenant ID
+
+# Container image carrying the agent code + @agent-mesh/sdk.
+image:
+  repository: ''
+  tag: latest
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Service Bus intake.
+servicebus:
+  namespace: '' # e.g. "sb-am-platform-prod-alpha-abc123.servicebus.windows.net"
+  queue: 'invocations'
+  # KEDA scaler config
+  messageCountPerReplica: 10
+  minReplicas: 0
+  maxReplicas: 20
+
+# Cosmos idempotency state.
+cosmos:
+  endpoint: '' # e.g. "https://cosmos-am-platform-prod-alpha-abc.documents.azure.com:443/"
+  database: 'idempotency'
+  container: 'invocations'
+
+# Provider routing — picks which adapter the agent uses.
+provider:
+  default: 'azure-openai' # "azure-openai" | "anthropic"
+  azureOpenAI:
+    endpoint: '' # e.g. "https://my-aoai.openai.azure.com/"
+    deployment: '' # e.g. "gpt-4o"
+  anthropic:
+    keyVaultSecretName: 'anthropic-key' # populated by terraform.modules.credentials
+    model: 'claude-sonnet-4-6'
+
+# Key Vault — for any provider keys we still pull at runtime (Anthropic always; AOAI only in non-AAD mode).
+keyVault:
+  uri: '' # e.g. "https://kv-am-platform-prod.vault.azure.net/"
+
+# OTel — points at the OTel Collector DaemonSet (deployed via charts/otel-collector).
+otel:
+  endpoint: 'otel-collector-agent-mesh-otel-collector.agent-mesh-system.svc.cluster.local:4317'
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Pod-level security context (matches the chart's container template).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+priorityClassName: ''
+tolerations: []
+nodeSelector: {}
+affinity: {}
+
+# PodDisruptionBudget — keeps at least N pods alive during voluntary disruptions.
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# DLQ handler — separate Deployment that consumes dead-lettered messages and
+# emits a Datadog event for each one. Min replicas=1 so DLQ entries are
+# always being read.
+dlqHandler:
+  enabled: true
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi

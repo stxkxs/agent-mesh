@@ -1,0 +1,48 @@
+# Node / TS
+node_modules/
+dist/
+*.tsbuildinfo
+.turbo/
+coverage/
+
+# Test snapshots that include transient values
+**/__snapshots__/*.local.snap
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+!example.tfvars
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Helm
+charts/**/charts/
+charts/**/*.tgz
+.helmignore.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+Thumbs.db

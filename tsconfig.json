@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/pricing" },
+    { "path": "./packages/sdk" },
+    { "path": "./packages/runtime-agent" },
+    { "path": "./packages/runtime-guardrails" },
+    { "path": "./packages/runtime-evals" },
+    { "path": "./packages/runtime-skills-builder" },
+    { "path": "./packages/runtime-batch" },
+    { "path": "./packages/cli" }
+  ]
+}

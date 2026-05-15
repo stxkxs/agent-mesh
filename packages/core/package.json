@@ -1,0 +1,63 @@
+{
+  "name": "@agent-mesh/core",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Core types: branded IDs, error hierarchy, Zod schemas, prompt hashing. Imported by every other agent-mesh package.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stxkxs/agent-mesh.git",
+    "directory": "packages/core"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./ids": {
+      "types": "./dist/ids.d.ts",
+      "import": "./dist/ids.js"
+    },
+    "./errors": {
+      "types": "./dist/errors.d.ts",
+      "import": "./dist/errors.js"
+    },
+    "./schemas": {
+      "types": "./dist/schemas.d.ts",
+      "import": "./dist/schemas.js"
+    },
+    "./hash": {
+      "types": "./dist/hash.d.ts",
+      "import": "./dist/hash.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@agent-mesh/config": "workspace:*",
+    "@types/node": "^25.7.0"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,8 @@
+name: pdf-summarizer
+version: 0.1.0
+description: Extract text from a PDF and produce a structured summary.
+entry: src/handler.ts
+runtime: node24
+capabilities:
+  - blob:read
+  - cognitive-services:document-intelligence

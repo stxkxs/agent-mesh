@@ -1,0 +1,65 @@
+{
+  "name": "agent-mesh",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Production-grade scaffolding for LLM agent platforms on AKS — Terraform modules + Helm charts + provider-agnostic SDK + governance / audit / evals / guardrails. OpenTelemetry → Datadog.",
+  "homepage": "https://github.com/stxkxs/agent-mesh",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stxkxs/agent-mesh.git"
+  },
+  "license": "Apache-2.0",
+  "author": "stxkxs",
+  "packageManager": "pnpm@11.1.1",
+  "engines": {
+    "node": ">=24.14.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
+    "test": "turbo run lint typecheck test",
+    "test:unit": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml}\"",
+    "tf:fmt": "terraform -chdir=terraform fmt -recursive",
+    "tf:fmt:check": "terraform -chdir=terraform fmt -recursive -check",
+    "tf:validate": "find terraform/examples -mindepth 1 -maxdepth 1 -type d -exec sh -c 'terraform -chdir=\"$0\" init -backend=false && terraform -chdir=\"$0\" validate' {} \\;",
+    "helm:lint": "find charts -mindepth 1 -maxdepth 1 -type d -exec helm lint {} \\;",
+    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build && changeset publish",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0",
+    "@commitlint/cli": "^21.0.1",
+    "@commitlint/config-conventional": "^21.0.1",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.7.0",
+    "@vitest/coverage-v8": "^4.1.6",
+    "esbuild": "^0.28.0",
+    "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import-x": "^4.16.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.4",
+    "prettier": "^3.8.3",
+    "tsx": "^4.21.0",
+    "turbo": "^2.9.12",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.3",
+    "vitest": "^4.1.6"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "typescript": "^6.0.0"
+      }
+    }
+  }
+}

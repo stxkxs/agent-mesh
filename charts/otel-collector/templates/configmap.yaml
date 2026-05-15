@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "otel.labels" . | nindent 4 }}
+data:
+  otel-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:{{ .Values.ports.otlpGrpc }}
+          http:
+            endpoint: 0.0.0.0:{{ .Values.ports.otlpHttp }}
+
+    processors:
+      # Add workspace + cluster as resource attributes on every signal so DD
+      # dashboards can filter without parsing log bodies.
+      resource:
+        attributes:
+          - key: agent_mesh.workspace
+            value: {{ .Values.workspace | quote }}
+            action: upsert
+          {{- if .Values.project }}
+          - key: agent_mesh.project
+            value: {{ .Values.project | quote }}
+            action: upsert
+          {{- end }}
+          - key: kube_cluster_name
+            value: {{ .Values.cluster | quote }}
+            action: upsert
+          - key: deployment.environment
+            value: {{ .Values.workspace | quote }}
+            action: upsert
+
+      # Batch for efficiency; tight timeout so latency stays sub-second.
+      batch:
+        send_batch_size: 8192
+        timeout: 1s
+        send_batch_max_size: 16384
+
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+
+      {{- if .Values.redaction.enabled }}
+      # PII redaction — applied to log bodies + every attribute value. The
+      # agent-mesh runtime ALSO redacts at the application boundary; this is
+      # belt-to-suspenders.
+      transform:
+        log_statements:
+          - context: log
+            statements:
+              - replace_pattern(body, "{{ .Values.redaction.patterns.creditCard }}", "[REDACTED:CC]")
+              - replace_pattern(body, "{{ .Values.redaction.patterns.ssn }}", "[REDACTED:SSN]")
+              - replace_pattern(body, "{{ .Values.redaction.patterns.awsAccessKey }}", "[REDACTED:AWS-KEY]")
+      {{- end }}
+
+    exporters:
+      datadog:
+        api:
+          site: {{ .Values.datadog.site | quote }}
+          key: "${env:DD_API_KEY}"
+        traces:
+          span_name_as_resource_name: true
+          compute_stats_by_span_kind: true
+        metrics:
+          resource_attributes_as_tags: true
+        logs:
+          dump_payloads: false
+        hostname_source: config_or_system
+
+      # Debug exporter — useful while bringing a cluster online.
+      debug:
+        verbosity: basic
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:{{ .Values.ports.healthz }}
+
+    service:
+      extensions: [health_check]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, resource, batch]
+          exporters: [datadog]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, resource, batch]
+          exporters: [datadog]
+        logs:
+          receivers: [otlp]
+          processors:
+            - memory_limiter
+            {{- if .Values.redaction.enabled }}
+            - transform
+            {{- end }}
+            - resource
+            - batch
+          exporters: [datadog]
+      telemetry:
+        metrics:
+          level: detailed
+          address: 0.0.0.0:8888

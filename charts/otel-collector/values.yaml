@@ -1,0 +1,65 @@
+## agent-mesh OpenTelemetry Collector — Datadog edition.
+##
+## Runs as a DaemonSet so agent pods can send OTLP to localhost on the node.
+## The Datadog API key is mounted from a Kubernetes Secret synced from Azure
+## Key Vault via the CSI Secrets Store Provider (azure.workload.identity).
+##
+## Required values: `datadog.site`, `datadog.apiKeySecretName` (the K8s Secret
+## name created by the CSI driver), `workspace`, `cluster`.
+
+image:
+  repository: otel/opentelemetry-collector-contrib
+  tag: 0.105.0
+  pullPolicy: IfNotPresent
+
+# Workspace identity — attached as resource attributes on every signal.
+workspace: '' # e.g. "platform-prod"
+project: '' # default project if not overridden by the agent's resource attrs
+cluster: '' # AKS cluster name, used for Datadog `kube_cluster_name`
+
+datadog:
+  # Datadog site. Common values: datadoghq.com, datadoghq.eu, us3.datadoghq.com.
+  site: datadoghq.com
+  # Name of the Kubernetes Secret containing the DD API key under the key `api-key`.
+  # The CSI Secrets Store Provider (azure.workload.identity) syncs from Key Vault.
+  apiKeySecretName: agent-mesh-datadog
+  # OTLP endpoint — derived from `site`. Override to use a regional gateway.
+  otlpEndpoint: ''
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Number of OTLP receiver replicas per node (DaemonSet => 1 per node).
+ports:
+  otlpGrpc: 4317
+  otlpHttp: 4318
+  healthz: 13133
+
+# PII redaction processor — masks credit cards, SSNs, AWS access keys in any
+# attribute or log body before forward. The agent runtime ALSO redacts at the
+# application layer (5-layer guardrail stack); this is the belt to that
+# suspenders.
+redaction:
+  enabled: true
+  patterns:
+    creditCard: '\b(?:\d[ -]?){13,16}\b'
+    ssn: '\b\d{3}-\d{2}-\d{4}\b'
+    awsAccessKey: '\b(?:AKIA|ASIA)[A-Z0-9]{16}\b'
+
+# Service account is annotated with Workload Identity client id when AAD
+# CSI secret sync is enabled. Cluster operator wires this via Helm values.
+serviceAccount:
+  create: true
+  name: agent-mesh-otel
+  annotations: {}
+
+# Tolerations + node selectors — leave permissive by default so the
+# DaemonSet covers every node, including system nodes if desired.
+tolerations: []
+nodeSelector: {}
+priorityClassName: system-node-critical

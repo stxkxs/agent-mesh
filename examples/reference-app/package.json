@@ -1,0 +1,33 @@
+{
+  "name": "@agent-mesh/examples-reference-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference deployment exercising every agent-mesh module + chart + runtime package end-to-end.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@agent-mesh/core": "workspace:*",
+    "@agent-mesh/runtime-agent": "workspace:*",
+    "@agent-mesh/runtime-evals": "workspace:*",
+    "@agent-mesh/runtime-guardrails": "workspace:*",
+    "@agent-mesh/sdk": "workspace:*",
+    "@azure/identity": "^4.13.1",
+    "@azure/keyvault-secrets": "^4.11.2",
+    "@azure/storage-blob": "^12.31.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@agent-mesh/config": "workspace:*",
+    "@types/node": "^25.7.0"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.0"
+  }
+}

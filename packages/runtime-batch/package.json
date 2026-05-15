@@ -1,0 +1,51 @@
+{
+  "name": "@agent-mesh/runtime-batch",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Service Bus batch dispatch with Cosmos-backed idempotency. Fan out N inputs to an agent queue and dedupe across re-publishes.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stxkxs/agent-mesh.git",
+    "directory": "packages/runtime-batch"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@agent-mesh/core": "workspace:*",
+    "@azure/cosmos": "^4.9.3",
+    "@azure/identity": "^4.13.1",
+    "@azure/service-bus": "^7.9.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@agent-mesh/config": "workspace:*",
+    "@types/node": "^25.7.0"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "agent-mesh — application",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "noEmit": false,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false
+  }
+}

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "otel.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "otel.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  internalTrafficPolicy: Local
+  selector: {{- include "otel.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: otlp-grpc
+      port: {{ .Values.ports.otlpGrpc }}
+      targetPort: otlp-grpc
+      protocol: TCP
+    - name: otlp-http
+      port: {{ .Values.ports.otlpHttp }}
+      targetPort: otlp-http
+      protocol: TCP

@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "otel.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "otel.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels: {{- include "otel.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "otel.selectorLabels" . | nindent 8 }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8888"
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        {{- with .Values.tolerations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: otel-collector
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "--config=/conf/otel-config.yaml"
+          ports:
+            - name: otlp-grpc
+              containerPort: {{ .Values.ports.otlpGrpc }}
+              protocol: TCP
+            - name: otlp-http
+              containerPort: {{ .Values.ports.otlpHttp }}
+              protocol: TCP
+            - name: healthz
+              containerPort: {{ .Values.ports.healthz }}
+              protocol: TCP
+            - name: metrics
+              containerPort: 8888
+              protocol: TCP
+          env:
+            - name: DD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.datadog.apiKeySecretName }}
+                  key: api-key
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: healthz
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: healthz
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "otel.fullname" . }}-config

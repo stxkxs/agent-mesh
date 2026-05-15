@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.turbo/
+coverage/
+pnpm-lock.yaml
+*.tsbuildinfo
+
+# Helm templates contain Go template syntax that prettier mangles.
+charts/**/templates/**
+
+# Terraform files have their own formatter (`terraform fmt`).
+**/*.tf

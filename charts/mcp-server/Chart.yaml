@@ -1,0 +1,15 @@
+apiVersion: v2
+name: agent-mesh-mcp-server
+description: |
+  Generic MCP server Deployment + Service + NetworkPolicy. Designed to be
+  installed once per backend (filesystem-readonly, weather, github, etc.)
+  and reached by name through the workspace's Application Gateway / WAF v2.
+type: application
+version: 0.1.0
+appVersion: '0.1.0'
+home: https://github.com/stxkxs/agent-mesh
+maintainers:
+  - name: stxkxs
+keywords:
+  - mcp
+  - model-context-protocol
